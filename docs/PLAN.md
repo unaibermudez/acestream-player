@@ -20,7 +20,7 @@ Objetivo: que la app cargue los canales sola en cualquier dispositivo, sin impor
 | ✅     | Arrancado en el portátil: `.env` con puerto 18080 y motor nativo, catálogo en `data/catalog.json`                                      |
 | ⬜ 👤  | Activar en Docker Desktop _Start Docker Desktop when you sign in_ (para no tener que arrancar nada a diario)                           |
 | ⏸️ 👤  | Instalar Docker y el plugin Compose en el servidor Ubuntu                                                                              |
-| ⏸️ 👤  | Clonar el repo (con clave de despliegue de solo lectura), crear `.env` y copiar el catálogo a `data/catalog.json`                      |
+| ⏸️ 👤  | Clonar el repo, crear `.env` y copiar el catálogo a `data/catalog.json`                                                                |
 | ⏸️ 👤  | `docker compose up -d --build`, abrir el puerto en `ufw` y reservar IP fija en el router                                               |
 
 Para actualizar el catálogo después, basta con sustituir `data/catalog.json` y recargar la página.
@@ -52,7 +52,7 @@ Accesible solo por LAN o Tailscale mientras no haya autenticación.
 
 | Estado | Tarea                                                                                                  |
 | ------ | ------------------------------------------------------------------------------------------------------ |
-| ⬜     | GitHub Actions: lint, tests, build y publicación de la imagen en GHCR (privada)                        |
+| ⬜     | GitHub Actions: lint, tests, build y publicación de la imagen en GHCR (pública)                        |
 | ⬜     | `docker-compose.yml` con la imagen de GHCR en lugar de `build:` (manteniendo la opción de build local) |
 | ⬜ 👤  | Actualizar con `docker compose pull && docker compose up -d`, o automático con Watchtower              |
 | ⬜ 👤  | Copia periódica de `./data`                                                                            |
@@ -82,3 +82,5 @@ Accesible solo por LAN o Tailscale mientras no haya autenticación.
   servidor en casa por ahora. El servidor Ubuntu y las fases 2–4 quedan aplazados; se retoman si
   aparece un equipo para hacer de servidor. Pendiente 👤: activar el arranque de Docker Desktop con
   Windows.
+- 2026-10-23: repositorio público. Nombres de canales del boceto de `docs/DESIGN.md` sustituidos por
+  genéricos; el README ya no usa clave de despliegue ni pide acceso.

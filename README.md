@@ -51,7 +51,7 @@ Para desarrollo: Node.js 22 o superior (probado con 24).
 ## Arranque rápido
 
 ```bash
-git clone git@github.com:unaibermudez/acestream-player.git
+git clone https://github.com/unaibermudez/acestream-player.git
 cd acestream-player
 cp /ruta/a/tu/catalogo.json data/catalog.json   # opcional: canales para todos los dispositivos
 docker compose up -d --build
@@ -98,7 +98,6 @@ es abrir una página en el navegador.
 | [Ace Stream Media para Windows](https://www.acestream.org/)       | El motor que descarga los streams            | Debe escuchar en el puerto 6878, que es lo que hace por defecto                                                  |
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Servir la app                                | Gratuito para uso personal. Instala WSL 2 si hace falta                                                          |
 | [Git para Windows](https://git-scm.com/download/win)              | Descargar y actualizar el código             | Opcional: también vale descargar el ZIP desde GitHub, pero entonces `actualizar.cmd` no sirve                    |
-| Acceso al repositorio                                             | Descargarlo                                  | Es privado: pide al propietario que te invite como colaborador en GitHub                                         |
 | Un catálogo de canales propio (JSON)                              | La pantalla de canales                       | Opcional. La app no trae ninguno; ver [Catálogo de canales](#catálogo-de-canales). Sin él, se usan links sueltos |
 | Chrome, Edge, Firefox o Safari recientes                          | Ver la app                                   |                                                                                                                  |
 
@@ -117,8 +116,7 @@ es abrir una página en el navegador.
    git clone https://github.com/unaibermudez/acestream-player.git
    ```
 
-   La primera vez Git abre el navegador para que inicies sesión en GitHub. Sin Git: botón
-   _Code → Download ZIP_ en GitHub y descomprímelo donde quieras.
+   Sin Git: botón _Code → Download ZIP_ en GitHub y descomprímelo donde quieras.
 
 4. **Copia tu catálogo** (si tienes uno) a `acestream-player\data\catalog.json`.
 5. **Arranca la app:** doble clic en `acestream-player\windows\iniciar.cmd`. El script:
@@ -183,24 +181,10 @@ sudo usermod -aG docker $USER   # cierra sesión y vuelve a entrar para aplicarl
 docker compose version          # debe mostrar Compose v2
 ```
 
-**2. Acceso al repositorio privado con una clave de despliegue (solo lectura)**
+**2. Código**
 
 ```bash
-ssh-keygen -t ed25519 -f ~/.ssh/acestream_deploy -N "" -C "acestream-player deploy"
-cat ~/.ssh/acestream_deploy.pub
-```
-
-Añade esa clave pública en GitHub → repositorio → _Settings → Deploy keys_ (sin permiso de escritura).
-Después:
-
-```bash
-cat >> ~/.ssh/config <<'EOF'
-Host github-acestream
-  HostName github.com
-  IdentityFile ~/.ssh/acestream_deploy
-  IdentitiesOnly yes
-EOF
-git clone git@github-acestream:unaibermudez/acestream-player.git ~/acestream-player
+git clone https://github.com/unaibermudez/acestream-player.git ~/acestream-player
 cd ~/acestream-player
 ```
 

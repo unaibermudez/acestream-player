@@ -581,3 +581,111 @@ code {
     font-size: 0.85rem;
   }
 }
+
+/* ---------- Cabecera: estado del motor, importar/exportar y avisos ---------- */
+
+.app-header__logo {
+  flex: none;
+  border-radius: 7px;
+}
+
+.engine-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.2rem 0.6rem;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  white-space: nowrap;
+}
+
+.engine-status__dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--text-muted);
+}
+
+.engine-status--online .engine-status__dot {
+  background: var(--ok);
+  box-shadow: 0 0 6px var(--ok);
+}
+
+.engine-status--offline {
+  border-color: color-mix(in srgb, var(--error) 50%, var(--border));
+  color: var(--error);
+}
+
+.engine-status--offline .engine-status__dot {
+  background: var(--error);
+}
+
+.import-export {
+  display: flex;
+  gap: 0.4rem;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  width: calc(100% - 2rem);
+  max-width: 1600px;
+  margin: 0.75rem auto 0;
+  padding: 0.6rem 0.9rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-left-width: 4px;
+  border-radius: 8px;
+  font-size: 0.9rem;
+}
+
+.notice > span {
+  flex: 1;
+}
+
+.notice--ok {
+  border-left-color: var(--ok);
+}
+
+.notice--warn {
+  border-left-color: var(--warn);
+}
+
+.notice--error {
+  border-left-color: var(--error);
+}
+
+.notice__close {
+  padding: 0 0.3rem;
+  background: none;
+  border: 0;
+  font-size: 1.3rem;
+  line-height: 1;
+  color: var(--text-muted);
+  cursor: pointer;
+}
+
+kbd {
+  padding: 0.05rem 0.35rem;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: ui-monospace, 'Cascadia Code', Menlo, monospace;
+  font-size: 0.8em;
+}
+
+@media (max-width: 599px) {
+  .hide-narrow,
+  .engine-status__label,
+  .app-header__title {
+    display: none;
+  }
+
+  .engine-status {
+    padding: 0.35rem;
+  }
+}

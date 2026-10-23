@@ -433,3 +433,8 @@ API) y devuélvela desde `createDefaultStorage()`. Los datos que lleguen se pued
   por inactividad. Es el comportamiento normal del motor.
 - No hay service worker: la app necesita conexión con el servidor para cargar, lo cual tiene sentido
   porque sin motor no se puede reproducir nada.
+
+## Licencia
+
+[MIT](LICENSE). La app no incluye ningún contenido: cada usuario es responsable de los links y
+catálogos que use con ella.

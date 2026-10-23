@@ -2,11 +2,23 @@ import { useEffect, useRef, useState } from 'react'
 import { useHlsPlayer } from '../hooks/useHlsPlayer'
 import { copyText } from '../lib/clipboard'
 import { getstreamUrl, hlsUrl, toAcestreamUri } from '../lib/links'
-import type { StreamLink } from '../types/stream'
-import { CloseIcon, CopyIcon, ExpandIcon, RetryIcon } from './icons'
+import { CloseIcon, CopyIcon, ExpandIcon, RetryIcon, StarIcon } from './icons'
+
+export interface PlayerSource {
+  contentId: string
+  label: string
+  title: string
+}
 
 interface Props {
-  link: StreamLink
+  title: string
+  contentId: string
+  /** Fuentes alternativas del mismo canal; se muestran como selector si hay más de una. */
+  sources?: PlayerSource[]
+  onSelectSource?(source: PlayerSource): void
+  /** Si se pasa, aparece el botón para guardar el stream en "Mis links". */
+  onSave?(): void
+  saved?: boolean
   onClose(): void
 }
 
@@ -23,13 +35,21 @@ function Elapsed() {
   return <>{Math.round((now - start) / 1000)} s</>
 }
 
-export function Player({ link, onClose }: Props) {
+export function Player({
+  title,
+  contentId,
+  sources = [],
+  onSelectSource,
+  onSave,
+  saved = false,
+  onClose,
+}: Props) {
   const videoRef = useRef<HTMLVideoElement>(null)
   const frameRef = useRef<HTMLDivElement>(null)
   const [attempt, setAttempt] = useState(0)
   const [copied, setCopied] = useState<string | null>(null)
   const [manualCopy, setManualCopy] = useState<string | null>(null)
-  const { status, error } = useHlsPlayer(videoRef, hlsUrl(link.contentId), attempt)
+  const { status, error } = useHlsPlayer(videoRef, hlsUrl(contentId), attempt)
 
   useEffect(() => {
     if (!copied) return
@@ -59,13 +79,13 @@ export function Player({ link, onClose }: Props) {
     }
   }
 
-  const streamUrl = getstreamUrl(link.contentId, window.location.origin)
+  const streamUrl = getstreamUrl(contentId, window.location.origin)
 
   return (
     <div className="player">
       <div className="player__header">
-        <h2 className="player__title" title={link.name}>
-          {link.name}
+        <h2 className="player__title" title={title}>
+          {title}
         </h2>
         <button
           type="button"
@@ -135,7 +155,30 @@ export function Player({ link, onClose }: Props) {
         )}
       </div>
 
+      {sources.length > 1 && onSelectSource && (
+        <div className="player__sources" role="group" aria-label="Fuentes del canal">
+          <span className="player__sources-label">Fuentes:</span>
+          {sources.map((source) => (
+            <button
+              key={source.contentId}
+              type="button"
+              className="variant-chip"
+              aria-pressed={source.contentId === contentId}
+              onClick={() => onSelectSource(source)}
+              title={source.title}
+            >
+              {source.label}
+            </button>
+          ))}
+        </div>
+      )}
+
       <div className="player__actions">
+        {onSave && (
+          <button type="button" className="button" onClick={onSave} disabled={saved}>
+            <StarIcon filled={saved} /> {saved ? 'En mis links' : 'Guardar en mis links'}
+          </button>
+        )}
         <button
           type="button"
           className="button"
@@ -147,7 +190,7 @@ export function Player({ link, onClose }: Props) {
         <button
           type="button"
           className="button"
-          onClick={() => void copy('ace', toAcestreamUri(link.contentId))}
+          onClick={() => void copy('ace', toAcestreamUri(contentId))}
         >
           <CopyIcon /> {copied === 'ace' ? '¡Copiado!' : 'acestream://'}
         </button>

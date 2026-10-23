@@ -1,13 +1,14 @@
 import { describe, expect, it } from 'vitest'
 import type { StreamLink } from '../types/stream'
 import { parseLinkList, toStreamLink } from './schema'
-import { createKeyValueStorage, type KeyValueStore } from './storage'
+import { createKeyValueCatalogStorage, createKeyValueStorage } from './storage'
 
-function memoryStore(initial: Record<string, string> = {}): KeyValueStore {
+function memoryStore(initial: Record<string, string> = {}) {
   const data = new Map(Object.entries(initial))
   return {
-    getItem: (key) => data.get(key) ?? null,
-    setItem: (key, value) => void data.set(key, value),
+    getItem: (key: string) => data.get(key) ?? null,
+    setItem: (key: string, value: string) => void data.set(key, value),
+    removeItem: (key: string) => void data.delete(key),
   }
 }
 
@@ -77,5 +78,16 @@ describe('parseLinkList', () => {
   it('devuelve null si no hay lista', () => {
     expect(parseLinkList({ foo: 1 })).toBeNull()
     expect(parseLinkList('texto')).toBeNull()
+  })
+})
+
+describe('createKeyValueCatalogStorage', () => {
+  it('guarda, recupera y borra el catálogo', async () => {
+    const storage = createKeyValueCatalogStorage(memoryStore())
+    const entries = [{ title: 'Prueba', contentId: 'c'.repeat(40), group: 'G', logo: null }]
+    await storage.save(entries)
+    await expect(storage.load()).resolves.toEqual(entries)
+    await storage.clear()
+    await expect(storage.load()).resolves.toEqual([])
   })
 })

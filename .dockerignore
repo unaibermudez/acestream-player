@@ -9,3 +9,6 @@ coverage
 Dockerfile
 docker-compose.yml
 .env
+hashes.json
+catalog.json
+public/catalog.json

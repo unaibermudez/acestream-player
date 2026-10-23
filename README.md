@@ -105,12 +105,53 @@ Una IP fija para el servidor (reserva DHCP en el router) evita que el acceso dir
 - **Importar/Exportar** (cabecera): exporta toda la lista en JSON. Importa ese mismo JSON, listas
   **M3U/M3U8** (usa el título de `#EXTINF` como nombre y `group-title` como etiqueta) o texto con un link
   por línea. El formato se detecta por el contenido.
+- **Canales** (pantalla principal): carga un catálogo JSON propio con el botón _Catálogo_. Los canales
+  se muestran por categoría (`group`) y las variantes del mismo canal (720p, 1080p, marcas `*`…) se
+  agrupan en una sola tarjeta con sus fuentes ordenadas por calidad. Al pulsar la tarjeta se reproduce la
+  mejor fuente; desde el reproductor se cambia de fuente con un clic o se guarda en _Mis links_. Ver
+  [Catálogo de canales](#catálogo-de-canales).
 - **Estado del motor:** el punto de la cabecera consulta el motor cada 15 s mientras la pestaña está
   visible.
 
 Como los datos viven en el `localStorage` de cada navegador, el móvil y el ordenador tienen listas
 independientes. Usa **Exportar** e **Importar** para copiar la lista de uno a otro, y para tener copias de
 seguridad.
+
+## Catálogo de canales
+
+La app no incluye ningún canal: el catálogo lo pones tú. Formato:
+
+```json
+{
+  "hashes": [
+    {
+      "title": "Canal 1080p *",
+      "hash": "<content ID de 40 hex>",
+      "group": "CATEGORÍA",
+      "logo": "https://…"
+    }
+  ]
+}
+```
+
+- `hash` es obligatorio (también se acepta `contentId`/`id`); `title`, `group` y `logo` son
+  opcionales. Vale también un array de entradas sin el objeto `hashes`.
+- Agrupación: se quita del título la calidad (`720p`, `1080p`, `4K`, `HD`…) y las marcas finales
+  (`*`, `**`); lo que queda es el nombre del canal dentro de su categoría.
+- Dos formas de cargarlo:
+  1. **Botón _Catálogo_** en la pestaña Canales: se guarda en el navegador (cada dispositivo el suyo).
+  2. **`catalog.json` servido junto a la app**: si el navegador no tiene catálogo propio, se carga
+     `/catalog.json` automáticamente. En desarrollo basta con dejarlo en `public/catalog.json`; en
+     Docker, móntalo en el contenedor `web`:
+     ```yaml
+     volumes:
+       - ./catalog.json:/usr/share/nginx/html/catalog.json:ro
+     ```
+     (crea el archivo antes de `docker compose up`: si no existe, Docker crearía un directorio).
+- `hashes.json`, `catalog.json` y `public/catalog.json` están en `.gitignore`: el catálogo no se
+  versiona.
+- Los logos se cargan desde sus URLs originales (sin enviar `Referer`); si fallan, se muestran las
+  iniciales.
 
 ## Problemas típicos
 

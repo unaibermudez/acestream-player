@@ -9,15 +9,14 @@ function initials(name: string): string {
     words
       .slice(0, 2)
       .map((w) => w[0])
-      .join('')
-      .toUpperCase() || '?'
+      .join('') || '?'
   )
 }
 
 type LogoState = 'loading' | 'loaded' | 'failed'
 
 /**
- * Logo remoto del canal. Mientras carga, o si falla, se ven las iniciales; el fondo blanco
+ * Placa del logo. Mientras carga, o si falla, muestra las iniciales en serif; el fondo blanco
  * (necesario para logos oscuros con transparencia) solo aparece cuando la imagen ha cargado.
  */
 export function ChannelLogo({ src, name }: { src: string | null; name: string }) {
@@ -26,14 +25,16 @@ export function ChannelLogo({ src, name }: { src: string | null; name: string })
 
   return (
     <span
-      className={`channel-logo${state === 'loaded' && showImage ? ' channel-logo--loaded' : ''}`}
+      className={`plate${state === 'loaded' && showImage ? ' plate--loaded' : ''}`}
       aria-hidden="true"
     >
-      {state !== 'loaded' && <span className="channel-logo__initials">{initials(name)}</span>}
+      {state !== 'loaded' && <span className="plate__initials">{initials(name)}</span>}
       {showImage && (
         <img
           src={src}
           alt=""
+          width="160"
+          height="100"
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"

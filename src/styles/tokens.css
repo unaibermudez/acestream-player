@@ -1,0 +1,116 @@
+/*
+ * Tokens de diseño: la única fuente de colores, tipografías, espacios y radios.
+ * Paleta y tipografías tomadas de unaibermudez.github.io (ver docs/DESIGN.md).
+ */
+
+/* Solo el subconjunto latin: cubre el español (tildes, ñ, ¿¡, «»). */
+@import '@fontsource/fraunces/latin-300.css';
+@import '@fontsource/fraunces/latin-300-italic.css';
+@import '@fontsource/fraunces/latin-400.css';
+@import '@fontsource/hanken-grotesk/latin-400.css';
+@import '@fontsource/hanken-grotesk/latin-500.css';
+@import '@fontsource/hanken-grotesk/latin-600.css';
+@import '@fontsource/fragment-mono/latin-400.css';
+
+:root {
+  --font-serif: 'Fraunces', 'Iowan Old Style', Georgia, serif;
+  --font-sans: 'Hanken Grotesk', -apple-system, system-ui, sans-serif;
+  --font-mono: 'Fragment Mono', ui-monospace, 'Cascadia Code', Menlo, monospace;
+
+  /* Escala tipográfica */
+  --text-xs: 0.75rem;
+  --text-sm: 0.875rem;
+  --text-md: 1rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.75rem;
+  --text-display: clamp(1.75rem, 4vw, 3rem);
+
+  /* Espaciado y layout */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.5rem;
+  --space-6: 2rem;
+  --space-7: 3rem;
+  --gutter: 3rem;
+  --container: 96rem;
+  --header-h: 64px;
+
+  /* Radios: la jerarquía se expresa con la forma (teatro > placa > control) */
+  --radius-stage: 14px;
+  --radius-plate: 10px;
+  --radius-field: 12px;
+  --radius-pill: 999px;
+
+  --ease: cubic-bezier(0.22, 1, 0.36, 1);
+  --duration: 220ms;
+  --tap: 40px;
+
+  /* Tema claro: papel y tinta */
+  color-scheme: light;
+  --bg: #f5f2ea;
+  --surface: #ece8dc;
+  --surface-strong: #e2ddcd;
+  --text: #181611;
+  --muted: #5c594f;
+  --hairline: rgb(24 22 17 / 16%);
+  --faint: rgb(24 22 17 / 32%);
+  --accent: #1b36c9;
+  --accent-soft: rgb(27 54 201 / 8%);
+  --on-accent: #ffffff;
+  --ok: #1d7a46;
+  --warn: #8a5a00;
+  --danger: #b42318;
+  --live: #2fbf71;
+  --screen: #000000;
+  --scrim: rgb(0 0 0 / 72%);
+  --plate: #ffffff;
+  --noise-opacity: 0.35;
+}
+
+/* Tema oscuro: tinta como lienzo. Por sistema salvo que se fije claro, o fijado a mano. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --bg: #181611;
+    --surface: #211d17;
+    --surface-strong: #2b261e;
+    --text: #f5f2ea;
+    --muted: #c2bcad;
+    --hairline: rgb(245 242 234 / 14%);
+    --faint: rgb(245 242 234 / 28%);
+    --accent: #8c9eff;
+    --accent-soft: rgb(140 158 255 / 12%);
+    --on-accent: #10131f;
+    --ok: #6fdc9c;
+    --warn: #f0c060;
+    --danger: #ff8a80;
+    --noise-opacity: 0.16;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #181611;
+  --surface: #211d17;
+  --surface-strong: #2b261e;
+  --text: #f5f2ea;
+  --muted: #c2bcad;
+  --hairline: rgb(245 242 234 / 14%);
+  --faint: rgb(245 242 234 / 28%);
+  --accent: #8c9eff;
+  --accent-soft: rgb(140 158 255 / 12%);
+  --on-accent: #10131f;
+  --ok: #6fdc9c;
+  --warn: #f0c060;
+  --danger: #ff8a80;
+  --noise-opacity: 0.16;
+}
+
+@media (max-width: 760px) {
+  :root {
+    --gutter: 1.25rem;
+    --header-h: 56px;
+  }
+}

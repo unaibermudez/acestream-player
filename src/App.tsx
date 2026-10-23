@@ -1,118 +1,162 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { AddLinksForm } from './components/AddLinksForm'
-import { ChannelsView } from './components/ChannelsView'
-import { EngineStatusBadge } from './components/EngineStatusBadge'
-import { FilterBar } from './components/FilterBar'
-import { ImportExport } from './components/ImportExport'
-import { LinkList } from './components/LinkList'
-import { Player, type PlayerSource } from './components/Player'
+import { ChannelsView } from './components/channels/ChannelsView'
+import { AppHeader } from './components/layout/AppHeader'
+import { Toast, type ToastMessage } from './components/layout/Toast'
+import { ImportExport } from './components/links/ImportExport'
+import { LinksView } from './components/links/LinksView'
+import { Player, type PlayerSource } from './components/player/Player'
 import { useCatalog } from './hooks/useCatalog'
 import { useEngineStatus } from './hooks/useEngineStatus'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useLinks } from './hooks/useLinks'
+import { useRecentChannels } from './hooks/useRecentChannels'
+import { useTheme } from './hooks/useTheme'
+import { useUrlState } from './hooks/useUrlState'
 import { parseImport } from './lib/exchange'
-import { collectTags, EMPTY_FILTER, filterLinks, type LinkFilter } from './lib/filter'
+import { defaultName } from './lib/links'
 import type { Channel, ChannelVariant } from './types/catalog'
 import type { StreamLink } from './types/stream'
 
-interface Notice {
-  kind: 'ok' | 'warn' | 'error'
-  text: string
-}
-
-type View = 'channels' | 'links'
-
-/** Lo que está sonando: un link guardado o una fuente concreta de un canal del catálogo. */
-type Playing =
-  { kind: 'link'; linkId: string } | { kind: 'channel'; channel: Channel; contentId: string }
-
-const VIEW_KEY = 'acestream-player:view'
-
-function readView(): View {
-  try {
-    return window.localStorage.getItem(VIEW_KEY) === 'links' ? 'links' : 'channels'
-  } catch {
-    return 'channels'
-  }
+interface NowPlaying {
+  contentId: string
+  title: string
+  subtitle?: string
+  sources: PlayerSource[]
+  /** Nombre y etiquetas con los que se guardaría en "Mis links". */
+  save: { name: string; tags: string[] }
 }
 
 export default function App() {
-  const { links, loaded, addEntries, updateLink, removeLink, markPlayed, mergeLinks } = useLinks()
+  const linksApi = useLinks()
+  const { links, addEntries, updateLink, removeLink, restoreLink, markPlayed, mergeLinks } =
+    linksApi
   const catalog = useCatalog()
   const engine = useEngineStatus()
-  const [view, setView] = useState<View>(readView)
-  const [filter, setFilter] = useState<LinkFilter>(EMPTY_FILTER)
-  const [playing, setPlaying] = useState<Playing | null>(null)
-  const [notice, setNotice] = useState<Notice | null>(null)
+  const { theme, toggle: toggleTheme } = useTheme()
+  const { recent, remember } = useRecentChannels()
+  const url = useUrlState()
+  const [toast, setToast] = useState<ToastMessage | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
-  const playerPaneRef = useRef<HTMLElement>(null)
+  const stageRef = useRef<HTMLDivElement>(null)
 
-  const tags = useMemo(() => collectTags(links), [links])
-  const visible = useMemo(() => filterLinks(links, filter), [links, filter])
+  const showToast = useCallback((message: Omit<ToastMessage, 'id'>) => {
+    setToast({ ...message, id: Date.now() })
+  }, [])
+  const dismissToast = useCallback(() => setToast(null), [])
 
-  const activeLink =
-    playing?.kind === 'link' ? (links.find((link) => link.id === playing.linkId) ?? null) : null
-  const activeVariant =
-    playing?.kind === 'channel'
-      ? (playing.channel.variants.find((v) => v.contentId === playing.contentId) ?? null)
-      : null
-  const activeContentId = activeLink?.contentId ?? activeVariant?.contentId ?? null
+  // Índices del catálogo: content ID → canal y fuente, y clave → canal.
+  const { byContentId, byKey } = useMemo(() => {
+    const byContentId = new Map<string, { channel: Channel; variant: ChannelVariant }>()
+    const byKey = new Map<string, Channel>()
+    for (const category of catalog.categories) {
+      for (const channel of category.channels) {
+        byKey.set(channel.key, channel)
+        for (const variant of channel.variants)
+          byContentId.set(variant.contentId, { channel, variant })
+      }
+    }
+    return { byContentId, byKey }
+  }, [catalog.categories])
+
+  const recentChannels = useMemo(
+    () => recent.map((entry) => byKey.get(entry.channelKey)).filter((c): c is Channel => !!c),
+    [recent, byKey],
+  )
+
+  const playingId = url.state.playing
+  const activeLink = playingId ? (links.find((link) => link.contentId === playingId) ?? null) : null
+
+  // Qué se reproduce: un canal del catálogo (con sus fuentes), un link guardado o un ID suelto.
+  const nowPlaying: NowPlaying | null = useMemo(() => {
+    if (!playingId) return null
+    const match = byContentId.get(playingId)
+    if (match) {
+      return {
+        contentId: playingId,
+        title: match.channel.name,
+        subtitle: match.channel.category,
+        sources: match.channel.variants,
+        save: { name: match.variant.title, tags: [match.channel.category] },
+      }
+    }
+    if (activeLink) {
+      return {
+        contentId: playingId,
+        title: activeLink.name,
+        subtitle: activeLink.tags.join(', ') || undefined,
+        sources: [],
+        save: { name: activeLink.name, tags: activeLink.tags },
+      }
+    }
+    return {
+      contentId: playingId,
+      title: defaultName(playingId),
+      sources: [],
+      save: { name: defaultName(playingId), tags: [] },
+    }
+  }, [playingId, byContentId, activeLink])
 
   useEffect(() => {
-    if (!notice) return
-    const id = window.setTimeout(() => setNotice(null), 8000)
-    return () => window.clearTimeout(id)
-  }, [notice])
+    document.title = nowPlaying ? `${nowPlaying.title} · Acestream` : 'Acestream Player'
+  }, [nowPlaying])
 
-  const changeView = useCallback((next: View) => {
-    setView(next)
-    try {
-      window.localStorage.setItem(VIEW_KEY, next)
-    } catch {
-      // Preferencia opcional: si no se puede guardar, no pasa nada.
-    }
+  const revealStage = useCallback(() => {
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+    requestAnimationFrame(() =>
+      stageRef.current?.scrollIntoView({ behavior: reduce ? 'auto' : 'smooth', block: 'start' }),
+    )
   }, [])
-
-  const revealPlayer = useCallback(() => {
-    // En móvil el reproductor está encima de la lista: se sube hasta él.
-    if (window.matchMedia('(max-width: 899px)').matches) {
-      requestAnimationFrame(() =>
-        playerPaneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
-      )
-    }
-  }, [])
-
-  const playLink = useCallback(
-    (link: StreamLink) => {
-      setPlaying({ kind: 'link', linkId: link.id })
-      markPlayed(link.id)
-      revealPlayer()
-    },
-    [markPlayed, revealPlayer],
-  )
 
   const playChannel = useCallback(
     (channel: Channel, variant: ChannelVariant) => {
-      setPlaying({ kind: 'channel', channel, contentId: variant.contentId })
-      revealPlayer()
+      url.play(variant.contentId)
+      remember(channel.key, variant.contentId)
+      revealStage()
     },
-    [revealPlayer],
+    [url, remember, revealStage],
+  )
+
+  const playLink = useCallback(
+    (link: StreamLink) => {
+      url.play(link.contentId)
+      markPlayed(link.id)
+      revealStage()
+    },
+    [url, markPlayed, revealStage],
+  )
+
+  const selectSource = useCallback(
+    (source: PlayerSource) => {
+      const match = byContentId.get(source.contentId)
+      if (match) remember(match.channel.key, source.contentId)
+      url.play(source.contentId)
+    },
+    [byContentId, remember, url],
   )
 
   const remove = useCallback(
     (link: StreamLink) => {
-      if (!window.confirm(`¿Borrar «${link.name}»?`)) return
-      if (playing?.kind === 'link' && playing.linkId === link.id) setPlaying(null)
       removeLink(link.id)
+      showToast({
+        kind: 'ok',
+        text: `«${link.name}» borrado.`,
+        action: { label: 'Deshacer', run: () => restoreLink(link) },
+      })
     },
-    [playing, removeLink],
+    [removeLink, restoreLink, showToast],
   )
 
-  const importText = useCallback(
+  const save = useCallback(() => {
+    if (!nowPlaying) return
+    const plan = addEntries([{ contentId: nowPlaying.contentId, ...nowPlaying.save }])
+    if (plan.toAdd.length > 0) showToast({ kind: 'ok', text: 'Guardado en Mis links.' })
+  }, [nowPlaying, addEntries, showToast])
+
+  const importLinks = useCallback(
     (text: string, fileName: string) => {
       const payload = parseImport(text)
       if (payload.kind === 'error') {
-        setNotice({ kind: 'error', text: `${fileName}: ${payload.message}` })
+        showToast({ kind: 'error', text: `${fileName}: ${payload.message}` })
         return
       }
 
@@ -129,153 +173,87 @@ export default function App() {
       }
 
       const parts = [`${summary.added} añadidos`]
-      if (summary.duplicates) parts.push(`${summary.duplicates} duplicados ignorados`)
-      if (summary.invalid) parts.push(`${summary.invalid} entradas no válidas`)
-      setNotice({
+      if (summary.duplicates) parts.push(`${summary.duplicates} ya estaban`)
+      if (summary.invalid) parts.push(`${summary.invalid} no válidos`)
+      showToast({
         kind: summary.added > 0 && !summary.invalid ? 'ok' : 'warn',
-        text: `Importado ${fileName}: ${parts.join(', ')}.`,
+        text: `${fileName}: ${parts.join(', ')}.`,
       })
     },
-    [addEntries, mergeLinks],
+    [addEntries, mergeLinks, showToast],
   )
-
-  const saveChannel = useCallback(() => {
-    if (playing?.kind !== 'channel' || !activeVariant) return
-    addEntries([
-      {
-        contentId: activeVariant.contentId,
-        name: activeVariant.title,
-        tags: [playing.channel.category],
-      },
-    ])
-  }, [playing, activeVariant, addEntries])
 
   useKeyboardShortcuts({
     onFocusSearch: () => searchRef.current?.focus(),
-    onEscape: () => setPlaying(null),
+    onEscape: () => {
+      if (url.state.playing) url.close()
+    },
   })
 
-  let player = (
-    <div className="player-placeholder">
-      <p>
-        Elige un {view === 'channels' ? 'canal' : 'link'} para reproducirlo.
-        <br />
-        <kbd>/</kbd> busca · <kbd>Esc</kbd> cierra el reproductor
-      </p>
-    </div>
-  )
-  if (activeLink) {
-    player = (
-      <Player
-        key={activeLink.contentId}
-        title={activeLink.name}
-        contentId={activeLink.contentId}
-        onClose={() => setPlaying(null)}
-      />
-    )
-  } else if (playing?.kind === 'channel' && activeVariant) {
-    const sources: PlayerSource[] = playing.channel.variants
-    player = (
-      // La key por content ID hace que cambiar de fuente destruya la instancia de hls.js anterior.
-      <Player
-        key={activeVariant.contentId}
-        title={`${playing.channel.name} · ${activeVariant.label}`}
-        contentId={activeVariant.contentId}
-        sources={sources}
-        onSelectSource={(source) =>
-          setPlaying({ kind: 'channel', channel: playing.channel, contentId: source.contentId })
-        }
-        onSave={saveChannel}
-        saved={links.some((link) => link.contentId === activeVariant.contentId)}
-        onClose={() => setPlaying(null)}
-      />
-    )
-  }
-  const isPlaying = activeLink !== null || activeVariant !== null
+  const view = url.state.view
 
   return (
-    <div className="app">
-      <header className="app-header">
-        <img className="app-header__logo" src="/icon.svg" alt="" width="28" height="28" />
-        <h1 className="app-header__title">Acestream Player</h1>
-        <EngineStatusBadge status={engine} />
-        <span className="app-header__spacer" />
-        {view === 'links' && <ImportExport links={links} onImportText={importText} />}
-      </header>
+    <>
+      <a className="skip-link" href="#contenido">
+        Saltar al contenido
+      </a>
+      <AppHeader
+        view={view}
+        linkCount={links.length}
+        engine={engine}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+        onNavigate={url.setView}
+        actions={
+          view === 'links' ? <ImportExport links={links} onImportText={importLinks} /> : undefined
+        }
+      />
 
-      <nav className="tabs" aria-label="Secciones">
-        <button
-          type="button"
-          className="tabs__tab"
-          aria-current={view === 'channels' ? 'page' : undefined}
-          onClick={() => changeView('channels')}
-        >
-          Canales
-        </button>
-        <button
-          type="button"
-          className="tabs__tab"
-          aria-current={view === 'links' ? 'page' : undefined}
-          onClick={() => changeView('links')}
-        >
-          Mis links {links.length > 0 && <span className="tabs__count">{links.length}</span>}
-        </button>
-      </nav>
-
-      {notice && (
-        <div className={`notice notice--${notice.kind}`} role="status">
-          <span>{notice.text}</span>
-          <button
-            type="button"
-            className="notice__close"
-            onClick={() => setNotice(null)}
-            aria-label="Cerrar aviso"
-          >
-            ×
-          </button>
-        </div>
-      )}
-
-      <main
-        className={`app-main${isPlaying ? ' app-main--playing' : ''}${view === 'channels' ? ' app-main--wide' : ''}`}
-      >
-        <section className="player-pane" aria-label="Reproductor" ref={playerPaneRef}>
-          {player}
-        </section>
-
-        <section
-          className="library-pane"
-          aria-label={view === 'channels' ? 'Canales' : 'Mis links'}
-        >
-          {view === 'channels' ? (
-            <ChannelsView
-              categories={catalog.categories}
-              source={catalog.source}
-              loaded={catalog.loaded}
-              activeContentId={activeContentId}
-              searchRef={searchRef}
-              onPlay={playChannel}
-              onImport={(text) => catalog.importText(text)}
-              onClear={catalog.clear}
+      <main className="app-main" id="contenido" tabIndex={-1}>
+        <div ref={stageRef}>
+          {nowPlaying && (
+            // La key por content ID hace que cambiar de fuente destruya la instancia de hls.js anterior.
+            <Player
+              key={nowPlaying.contentId}
+              title={nowPlaying.title}
+              subtitle={nowPlaying.subtitle}
+              contentId={nowPlaying.contentId}
+              sources={nowPlaying.sources}
+              onSelectSource={selectSource}
+              onSave={save}
+              saved={links.some((link) => link.contentId === nowPlaying.contentId)}
+              onClose={url.close}
             />
-          ) : (
-            <>
-              <AddLinksForm onAdd={addEntries} />
-              <FilterBar filter={filter} tags={tags} searchRef={searchRef} onChange={setFilter} />
-              {loaded && (
-                <LinkList
-                  links={visible}
-                  totalCount={links.length}
-                  activeId={activeLink?.id ?? null}
-                  onPlay={playLink}
-                  onUpdate={updateLink}
-                  onRemove={remove}
-                />
-              )}
-            </>
           )}
-        </section>
+        </div>
+
+        {view === 'channels' ? (
+          <ChannelsView
+            categories={catalog.categories}
+            recent={recentChannels}
+            source={catalog.source}
+            loaded={catalog.loaded}
+            activeContentId={playingId}
+            searchRef={searchRef}
+            onPlay={playChannel}
+            onImport={(text) => catalog.importText(text)}
+            onClear={catalog.clear}
+          />
+        ) : (
+          <LinksView
+            links={links}
+            loaded={linksApi.loaded}
+            activeId={activeLink?.id ?? null}
+            searchRef={searchRef}
+            onAdd={addEntries}
+            onPlay={playLink}
+            onUpdate={updateLink}
+            onRemove={remove}
+          />
+        )}
       </main>
-    </div>
+
+      <Toast toast={toast} onDismiss={dismissToast} />
+    </>
   )
 }

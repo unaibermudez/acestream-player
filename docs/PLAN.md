@@ -65,3 +65,6 @@ Accesible solo por LAN o Tailscale mientras no haya autenticación.
   con prioridad sobre el navegador; nginx devuelve 404 real si falta. Verificado con un catálogo de
   prueba en Docker y en dev: carga automática, sustitución en caliente, móvil y 404. Guía de despliegue
   en el README. Pendiente: los pasos 👤 en el servidor.
+- 2026-10-23: antes de seguir con el despliegue, rediseño de la interfaz con el estilo de la web
+  personal y las skills `frontend-design`, `web-design-guidelines` y `react-best-practices` (ver
+  `docs/DESIGN.md`). No cambia el estado de las fases.

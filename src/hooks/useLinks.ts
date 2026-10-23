@@ -17,6 +17,8 @@ export interface LinksApi {
   addEntries(entries: ParsedEntry[]): AdditionPlan
   updateLink(id: string, patch: LinkPatch): void
   removeLink(id: string): void
+  /** Vuelve a añadir un link borrado (para "Deshacer"); no hace nada si ya existe. */
+  restoreLink(link: StreamLink): void
   markPlayed(id: string): void
   /** Añade links completos (importación JSON) saltando los content ID ya existentes. */
   mergeLinks(incoming: StreamLink[]): MergeResult
@@ -83,6 +85,18 @@ export function useLinks(storage: LinkStorage = defaultStorage()): LinksApi {
     [commit],
   )
 
+  const restoreLink = useCallback(
+    (link: StreamLink) => {
+      if (
+        linksRef.current.some((item) => item.id === link.id || item.contentId === link.contentId)
+      ) {
+        return
+      }
+      commit([link, ...linksRef.current])
+    },
+    [commit],
+  )
+
   const markPlayed = useCallback(
     (id: string) => {
       const now = new Date().toISOString()
@@ -113,8 +127,17 @@ export function useLinks(storage: LinkStorage = defaultStorage()): LinksApi {
   )
 
   return useMemo(
-    () => ({ links, loaded, addEntries, updateLink, removeLink, markPlayed, mergeLinks }),
-    [links, loaded, addEntries, updateLink, removeLink, markPlayed, mergeLinks],
+    () => ({
+      links,
+      loaded,
+      addEntries,
+      updateLink,
+      removeLink,
+      restoreLink,
+      markPlayed,
+      mergeLinks,
+    }),
+    [links, loaded, addEntries, updateLink, removeLink, restoreLink, markPlayed, mergeLinks],
   )
 }
 

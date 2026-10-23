@@ -164,7 +164,8 @@ Una IP fija para el servidor (reserva DHCP en el router) evita que el acceso dir
   (`http://…/ace/getstream?id=…`) o varias líneas a la vez, opcionalmente con el formato `Nombre | link`.
   Las líneas con `#` se ignoran. Los duplicados se detectan, y las líneas erróneas se quedan en el cuadro
   con su motivo para que puedas corregirlas.
-- **Lista:** nombre y etiquetas editables (lápiz), favorito (estrella), último uso y borrar. Búsqueda
+- **Lista:** nombre y etiquetas editables (lápiz), favorito (estrella), último uso y borrar (con
+  **Deshacer** en el aviso, sin confirmaciones). Búsqueda
   sin distinguir tildes ni mayúsculas, y filtros por etiqueta y por favoritos.
 - **Reproductor:** muestra el estado de carga con los segundos transcurridos. Si en 90 s el stream no
   ha arrancado, aparece un error claro con botón **Reintentar**. También incluye pantalla completa y los
@@ -179,6 +180,14 @@ Una IP fija para el servidor (reserva DHCP en el router) evita que el acceso dir
   agrupan en una sola tarjeta con sus fuentes ordenadas por calidad. Al pulsar la tarjeta se reproduce la
   mejor fuente; desde el reproductor se cambia de fuente con un clic o se guarda en _Mis links_. Ver
   [Catálogo de canales](#catálogo-de-canales).
+- **Reproductor en formato teatro:** el vídeo se abre arriba a todo el ancho, con el título, el
+  selector de fuentes y las acciones debajo.
+- **Vistos recientemente:** la primera estantería de Canales recuerda los últimos canales abiertos en
+  ese navegador.
+- **La URL guarda el estado:** `?ver=<id>` es lo que se está viendo y `?vista=links` la pestaña.
+  Recargar mantiene la reproducción, el botón _atrás_ (también el del móvil) cierra el reproductor y
+  puedes compartir o guardar un enlace directo a un canal.
+- **Tema claro u oscuro:** sigue al del sistema hasta que eliges uno con el botón de la cabecera.
 - **Estado del motor:** el punto de la cabecera consulta el motor cada 15 s mientras la pestaña está
   visible.
 
@@ -309,8 +318,19 @@ src/
     filter.ts              Búsqueda, filtros y orden
     playback.ts            Elección hls.js / HLS nativo y mensajes de error
     engine.ts, format.ts, clipboard.ts, id.ts
-  hooks/                   useLinks, useHlsPlayer, useEngineStatus, useKeyboardShortcuts
-  components/              Player, LinkList, LinkItem, AddLinksForm, FilterBar, ImportExport…
+    catalog.ts             Catálogo de canales: validación, agrupado por canal y búsqueda
+    recent.ts, urlState.ts, theme.ts   Vistos recientemente, estado en la URL y tema
+  styles/
+    tokens.css             Colores, tipografías, espacios y radios (única fuente de diseño)
+    base.css               Reset, elementos base y utilidades
+  hooks/                   useLinks, useCatalog, useHlsPlayer, useUrlState, useTheme…
+  components/
+    ui/                    Button, IconButton, Chip y estilos de campos (controles base)
+    layout/                Cabecera, estado del motor y avisos
+    channels/              Vista de canales: estanterías, tarjetas y logos
+    links/                 Vista "Mis links": formulario, filtros y lista
+    player/                Reproductor (teatro)
+docs/DESIGN.md             Sistema de diseño: tokens, composición y principios
 docker/nginx.conf          SPA + proxy inverso al motor
 Dockerfile                 Build multi-stage (Node → nginx)
 docker-compose.yml         Servicios acestream + web

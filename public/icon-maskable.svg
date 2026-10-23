@@ -1,10 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
   <!-- Variante "maskable": fondo a sangre y glifo dentro de la zona segura (80 % central). -->
-  <rect width="512" height="512" fill="#4f8cff"/>
+  <rect width="512" height="512" fill="#1B36C9"/>
   <g transform="translate(256 256) scale(0.72) translate(-256 -256)">
-    <path d="M196 148v216l176-108z" fill="#fff"/>
-    <circle cx="132" cy="256" r="22" fill="#fff" opacity=".85"/>
-    <circle cx="132" cy="176" r="16" fill="#fff" opacity=".6"/>
-    <circle cx="132" cy="336" r="16" fill="#fff" opacity=".6"/>
+    <path d="M196 148v216l176-108z" fill="#F5F2EA"/>
+    <circle cx="132" cy="256" r="22" fill="#F5F2EA" opacity=".85"/>
+    <circle cx="132" cy="176" r="16" fill="#F5F2EA" opacity=".6"/>
+    <circle cx="132" cy="336" r="16" fill="#F5F2EA" opacity=".6"/>
   </g>
 </svg>

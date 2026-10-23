@@ -8,8 +8,18 @@
       name="description"
       content="Organiza y reproduce tus links de Acestream contra tu motor casero."
     />
-    <meta name="color-scheme" content="dark" />
-    <meta name="theme-color" content="#0e1116" />
+    <meta name="color-scheme" content="light dark" />
+    <meta name="theme-color" content="#F5F2EA" />
+    <script>
+      // Aplica el tema guardado antes del primer pintado (sin destello). Ver src/hooks/useTheme.ts.
+      try {
+        var t = localStorage.getItem('acestream-player:theme')
+        var dark =
+          t === 'dark' || (t !== 'light' && matchMedia('(prefers-color-scheme: dark)').matches)
+        if (t === 'light' || t === 'dark') document.documentElement.dataset.theme = t
+        document.querySelector('meta[name=theme-color]').content = dark ? '#181611' : '#F5F2EA'
+      } catch (e) {}
+    </script>
     <link rel="icon" type="image/svg+xml" href="/icon.svg" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />

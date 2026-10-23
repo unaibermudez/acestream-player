@@ -1,0 +1,260 @@
+/* Controles base. Todos son píldoras: el radio identifica "esto se pulsa". */
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  min-height: var(--tap);
+  padding: 0 1.1rem;
+  border: 1px solid var(--faint);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.btn:hover:not(:disabled) {
+  border-color: var(--text);
+}
+
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.btn--primary {
+  border-color: var(--text);
+  background: var(--text);
+  color: var(--bg);
+}
+
+.btn--primary:hover:not(:disabled) {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--on-accent);
+}
+
+.btn--ghost {
+  border-color: transparent;
+}
+
+.btn--ghost:hover:not(:disabled) {
+  border-color: var(--hairline);
+  background: var(--surface);
+}
+
+.btn--sm {
+  min-height: 32px;
+  padding: 0 0.8rem;
+  font-size: var(--text-xs);
+}
+
+.btn svg {
+  flex: none;
+}
+
+.icon-btn {
+  display: inline-grid;
+  place-items: center;
+  flex: none;
+  width: var(--tap);
+  height: var(--tap);
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--muted);
+  cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.icon-btn:hover:not(:disabled) {
+  background: var(--surface);
+  color: var(--text);
+}
+
+.icon-btn--outline {
+  border-color: var(--faint);
+  color: var(--text);
+}
+
+.icon-btn--danger:hover:not(:disabled) {
+  color: var(--danger);
+}
+
+.icon-btn[aria-pressed='true'] {
+  color: var(--accent);
+}
+
+.icon-btn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 32px;
+  padding: 0 0.85rem;
+  border: 1px solid var(--faint);
+  border-radius: var(--radius-pill);
+  background: transparent;
+  color: var(--text);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background-color var(--duration) var(--ease),
+    border-color var(--duration) var(--ease),
+    color var(--duration) var(--ease);
+}
+
+.chip:hover {
+  border-color: var(--text);
+}
+
+.chip[aria-pressed='true'] {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+}
+
+/* Variante para datos técnicos (calidad de la fuente): mono y más compacta. */
+.chip--data {
+  min-height: 28px;
+  padding: 0 0.6rem;
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+@media (pointer: coarse) {
+  .chip,
+  .chip--data,
+  .btn--sm {
+    min-height: var(--tap);
+  }
+}
+
+/* Campos de formulario */
+
+.field-label {
+  display: block;
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+/* Etiqueta que envuelve a su campo: texto encima, campo debajo. */
+.field-stack {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: 500;
+}
+
+.field-optional {
+  color: var(--muted);
+  font-weight: 400;
+}
+
+.field-hint {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--text-xs);
+}
+
+.field {
+  width: 100%;
+  min-width: 0;
+  min-height: var(--tap);
+  padding: 0.55rem 0.85rem;
+  border: 1px solid var(--faint);
+  border-radius: var(--radius-field);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-md);
+  font-weight: 400;
+  transition: border-color var(--duration) var(--ease);
+}
+
+.field::placeholder {
+  color: var(--muted);
+}
+
+.field:hover {
+  border-color: var(--text);
+}
+
+.field:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+/* Buscador: píldora con borde fino, como los controles de la web. */
+
+.search {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search__icon {
+  position: absolute;
+  left: 1rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search__input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 3rem 0 2.75rem;
+  border: 1px solid var(--faint);
+  border-radius: var(--radius-pill);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-md);
+  transition: border-color var(--duration) var(--ease);
+}
+
+.search__input::placeholder {
+  color: var(--muted);
+}
+
+.search__input:hover {
+  border-color: var(--text);
+}
+
+.search__input:focus-visible {
+  border-color: var(--accent);
+  outline: 2px solid var(--accent);
+  outline-offset: 1px;
+}
+
+.search__kbd {
+  position: absolute;
+  right: 1rem;
+  color: var(--muted);
+  pointer-events: none;
+}
+
+.search__input:focus ~ .search__kbd,
+.search__input:not(:placeholder-shown) ~ .search__kbd {
+  display: none;
+}

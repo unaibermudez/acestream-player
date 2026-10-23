@@ -1,7 +1,8 @@
 import { useRef, type ChangeEvent } from 'react'
-import { buildExport, exportFileName } from '../lib/exchange'
-import type { StreamLink } from '../types/stream'
-import { DownloadIcon, UploadIcon } from './icons'
+import { buildExport, exportFileName } from '../../lib/exchange'
+import type { StreamLink } from '../../types/stream'
+import { DownloadIcon, UploadIcon } from '../icons'
+import { Button } from '../ui/Button'
 
 interface Props {
   links: StreamLink[]
@@ -20,6 +21,7 @@ function download(fileName: string, content: string, type: string) {
   window.setTimeout(() => URL.revokeObjectURL(url), 0)
 }
 
+/** Copia de seguridad de "Mis links": exportar a JSON e importar JSON, M3U o texto. */
 export function ImportExport({ links, onImportText }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
 
@@ -41,28 +43,27 @@ export function ImportExport({ links, onImportText }: Props) {
 
   return (
     <div className="import-export">
-      <button
-        type="button"
-        className="button"
+      <Button
+        size="sm"
+        icon={<UploadIcon width={16} height={16} />}
         onClick={() => fileRef.current?.click()}
-        title="Importar JSON, M3U o texto"
+        title="Importar un JSON exportado, una lista M3U o texto con un link por línea"
       >
-        <UploadIcon />
-        <span className="hide-narrow">Importar</span>
-      </button>
-      <button
-        type="button"
-        className="button"
+        Importar
+      </Button>
+      <Button
+        size="sm"
+        icon={<DownloadIcon width={16} height={16} />}
         onClick={handleExport}
         disabled={links.length === 0}
-        title="Descargar la lista en JSON"
+        title="Descargar todos tus links en un archivo JSON"
       >
-        <DownloadIcon />
-        <span className="hide-narrow">Exportar</span>
-      </button>
+        Exportar
+      </Button>
       <input
         ref={fileRef}
         type="file"
+        name="import"
         accept=".json,.m3u,.m3u8,.txt,application/json,audio/x-mpegurl,application/vnd.apple.mpegurl,text/plain"
         onChange={(event) => void handleFile(event)}
         hidden

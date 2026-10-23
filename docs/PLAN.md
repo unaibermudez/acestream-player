@@ -50,16 +50,17 @@ Accesible solo por LAN o Tailscale mientras no haya autenticación.
 
 ## Fase 4: actualizaciones y copias de seguridad
 
-| Estado | Tarea                                                                                                  |
-| ------ | ------------------------------------------------------------------------------------------------------ |
-| ⬜     | GitHub Actions: lint, tests, build y publicación de la imagen en GHCR (pública)                        |
-| ⬜     | `docker-compose.yml` con la imagen de GHCR en lugar de `build:` (manteniendo la opción de build local) |
-| ⬜ 👤  | Actualizar con `docker compose pull && docker compose up -d`, o automático con Watchtower              |
-| ⬜ 👤  | Copia periódica de `./data`                                                                            |
+| Estado | Tarea                                                                                                |
+| ------ | ---------------------------------------------------------------------------------------------------- |
+| ✅     | GitHub Actions: lint, tests, build y publicación de la imagen en GHCR (pública)                      |
+| ✅     | `deploy/docker-compose.yml` con la imagen de GHCR (el compose principal sigue construyendo en local) |
+| ⬜ 👤  | Actualizar con `docker compose pull && docker compose up -d`, o automático con Watchtower            |
+| ⬜ 👤  | Copia periódica de `./data`                                                                          |
 
 ## Mejora posterior
 
-- Mostrar los peers de cada fuente (respuesta JSON del motor) y elegir automáticamente la variante con más peers.
+- ✅ Mostrar los peers de cada fuente (respuesta JSON del motor) y elegir automáticamente la variante con más peers.
+- ✅ Favoritos en los canales del catálogo y botón «Seguir con…».
 
 ## Registro
 
@@ -84,3 +85,8 @@ Accesible solo por LAN o Tailscale mientras no haya autenticación.
   Windows.
 - 2026-10-23: repositorio público. Nombres de canales del boceto de `docs/DESIGN.md` sustituidos por
   genéricos; el README ya no usa clave de despliegue ni pide acceso.
+- 2026-10-23: licencia MIT; elección automática de la fuente con más peers (API JSON del motor),
+  favoritos y «Seguir con…»; `iniciar.cmd` elige el motor de Windows o el de Docker; CI en GitHub
+  Actions y publicación de la imagen en GHCR, con `deploy/docker-compose.yml` para instalar solo con
+  Docker. Verificado con un motor falso (sin streams reales): elige la fuente con más peers, cierra
+  las demás sesiones y respeta la elección manual.

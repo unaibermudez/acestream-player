@@ -37,6 +37,25 @@ devuelve `500 failed to load content` ante un ID inexistente.
 
 > ⚠️ La imagen solo está publicada para **amd64**: no funciona en Raspberry Pi ni en otros servidores ARM.
 
+## Instalación solo con Docker
+
+La forma más corta: no hace falta descargar el código ni instalar Ace Stream. Necesitas Docker (en
+Windows y macOS, Docker Desktop) en un equipo **x86-64**, porque el motor solo existe para amd64.
+
+```bash
+mkdir acestream-player && cd acestream-player
+curl -fsSLO https://raw.githubusercontent.com/unaibermudez/acestream-player/main/deploy/docker-compose.yml
+docker compose up -d
+```
+
+La app queda en `http://localhost:8080`. Usa la imagen `ghcr.io/unaibermudez/acestream-player`, que
+GitHub Actions publica en cada cambio, y la del motor.
+
+- **Catálogo (opcional):** deja tu archivo en `data/catalog.json`, junto al `docker-compose.yml`.
+- **Otro puerto:** crea un `.env` con `WEB_PORT=9000` y vuelve a ejecutar `docker compose up -d`.
+- **Actualizar:** `docker compose pull && docker compose up -d`.
+- **Quitarla:** `docker compose down --rmi all`.
+
 ## Requisitos del servidor
 
 Para un servidor Linux con el motor en Docker. Para un PC con Windows, ver
@@ -85,9 +104,12 @@ Para una prueba puntual también vale `WEB_PORT=9000 docker compose up -d`.
 
 ## Instalación en tu ordenador (Windows)
 
-Para tenerla en tu propio PC o portátil, sin servidor aparte. La app corre en Docker Desktop y usa
-el motor de Ace Stream para Windows instalado en el mismo equipo. Una vez instalada, el uso diario
-es abrir una página en el navegador.
+Para tenerla en tu propio PC o portátil, sin servidor aparte, con un doble clic para arrancarla y
+actualizarla. La app corre en Docker Desktop. Si tienes Ace Stream para Windows abierto, usa ese motor;
+si no, el que va dentro de Docker. Una vez instalada, el uso diario es abrir una página en el navegador.
+
+Si no quieres scripts ni código, la [instalación solo con Docker](#instalación-solo-con-docker) también
+vale en Windows.
 
 ### Requisitos
 
@@ -95,7 +117,7 @@ es abrir una página en el navegador.
 | ----------------------------------------------------------------- | -------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
 | Windows 10 (22H2) u 11, 64 bits (x64)                             | Sistema                                      | Con la virtualización activada en la BIOS/UEFI; Docker Desktop la necesita para WSL 2                            |
 | 8 GB de RAM y unos 5 GB de disco libres                           | Docker Desktop, el motor y la caché de vídeo | Con 4 GB funciona, pero justo                                                                                    |
-| [Ace Stream Media para Windows](https://www.acestream.org/)       | El motor que descarga los streams            | Debe escuchar en el puerto 6878, que es lo que hace por defecto                                                  |
+| [Ace Stream Media para Windows](https://www.acestream.org/)       | El motor que descarga los streams            | Opcional: sin él se usa el motor de Docker. Si lo usas, debe escuchar en el puerto 6878 (lo hace por defecto)    |
 | [Docker Desktop](https://www.docker.com/products/docker-desktop/) | Servir la app                                | Gratuito para uso personal. Instala WSL 2 si hace falta                                                          |
 | [Git para Windows](https://git-scm.com/download/win)              | Descargar y actualizar el código             | Opcional: también vale descargar el ZIP desde GitHub, pero entonces `actualizar.cmd` no sirve                    |
 | Un catálogo de canales propio (JSON)                              | La pantalla de canales                       | Opcional. La app no trae ninguno; ver [Catálogo de canales](#catálogo-de-canales). Sin él, se usan links sueltos |
@@ -103,7 +125,7 @@ es abrir una página en el navegador.
 
 ### Pasos (una sola vez)
 
-1. **Instala Ace Stream** y ábrelo. Comprueba que el motor responde abriendo
+1. **(Opcional) Instala Ace Stream** y ábrelo. Comprueba que el motor responde abriendo
    <http://localhost:6878/webui/api/service?method=get_version&format=json> en el navegador: debe
    mostrar un JSON con `"version"`.
 2. **Instala Docker Desktop.** Al terminar, ábrelo, acepta las condiciones y, en
@@ -120,10 +142,11 @@ es abrir una página en el navegador.
 
 4. **Copia tu catálogo** (si tienes uno) a `acestream-player\data\catalog.json`.
 5. **Arranca la app:** doble clic en `acestream-player\windows\iniciar.cmd`. El script:
-   - crea el archivo `.env` con el puerto 18080 y el motor de Windows,
+   - crea el archivo `.env` con el puerto: 8080, o 18080 si el 8080 está ocupado,
    - arranca Docker Desktop si no está abierto,
+   - usa Ace Stream para Windows si está abierto y, si no, el motor de Docker,
    - construye la app (la primera vez tarda unos minutos; las siguientes, segundos),
-   - y la abre en <http://localhost:18080>.
+   - y la abre en el navegador (`http://localhost:8080` o `:18080`).
 
    Si Windows muestra un aviso de SmartScreen o del firewall, permite el acceso.
 
@@ -132,34 +155,30 @@ es abrir una página en el navegador.
 
 ### Uso diario
 
-Enciende el equipo y abre el marcador. Docker Desktop y Ace Stream arrancan con Windows, y el
-contenedor de la app se levanta solo (`restart: unless-stopped`). Si la página no carga justo después
-de encender, espera medio minuto y recarga, o haz doble clic en `windows\iniciar.cmd`.
+Enciende el equipo y abre el marcador. Docker Desktop arranca con Windows y los contenedores se
+levantan solos (`restart: unless-stopped`) con el motor que se eligió la última vez. Si la página no
+carga justo después de encender, espera medio minuto y recarga, o haz doble clic en
+`windows\iniciar.cmd`. Si usas Ace Stream para Windows, tiene que estar abierto.
 
 - **Actualizar a la última versión:** doble clic en `windows\actualizar.cmd` (`git pull` y
   reconstrucción). Tu lista de links y tus favoritos no se pierden: viven en el navegador.
 - **Cambiar el catálogo:** sustituye `data\catalog.json` y recarga la página.
 - **Usarla desde el móvil en casa:** ver [Acceso desde el móvil](#acceso-desde-el-móvil-en-tu-red-local),
-  con la IP del ordenador (`ipconfig`) y el puerto 18080. Windows pedirá permiso en el firewall.
+  con la IP del ordenador (`ipconfig`) y el puerto de la app. Windows pedirá permiso en el firewall.
 - **Pararla:** `docker compose down` en la carpeta del proyecto. Vuelve con `windows\iniciar.cmd`.
 - **Desinstalarla:** `docker compose down --rmi local` y borra la carpeta. Exporta antes tu lista
   desde _Mis links → Exportar_ si quieres conservarla.
 
 ### Cómo funciona por dentro
 
-El `.env` que crea `iniciar.cmd`:
-
-```ini
-WEB_PORT=18080
-COMPOSE_FILE=docker-compose.yml;docker-compose.native.yml
-```
-
-- `WEB_PORT`: el puerto de la app. 18080 en lugar de 8080 porque el 8080 suele estar ocupado en
-  equipos de desarrollo; cámbialo si lo prefieres.
-- `docker-compose.native.yml` desactiva el contenedor `acestream` y apunta nginx a
-  `http://host.docker.internal:6878`, el motor de Ace Stream del propio equipo. Así no hay dos
-  motores compitiendo por la red. Para usar el motor en Docker, borra la línea `COMPOSE_FILE` y
-  ejecuta `docker compose up -d`.
+- `.env` solo guarda el puerto (`WEB_PORT`). Cámbialo si lo prefieres y vuelve a ejecutar
+  `iniciar.cmd`.
+- Para elegir el motor, `iniciar.cmd` consulta `http://127.0.0.1:6878`. Si responde Ace Stream para
+  Windows, arranca con `docker-compose.native.yml`, que desactiva el contenedor `acestream` y apunta
+  nginx a `http://host.docker.internal:6878` (y para el contenedor del motor si existía, para no tener
+  dos motores). Si no responde, usa solo `docker-compose.yml`, con el motor en Docker.
+- Para forzar una opción a mano: `docker compose up -d` (motor en Docker) o
+  `docker compose -f docker-compose.yml -f docker-compose.native.yml up -d` (motor de Windows).
 
 ### Otros sistemas
 
@@ -255,13 +274,19 @@ Una IP fija para el servidor (reserva DHCP en el router) evita que el acceso dir
 - **Canales** (pantalla principal): muestra el catálogo de `data/catalog.json` del servidor (o uno
   cargado en el navegador con el botón _Catálogo_). Los canales
   se muestran por categoría (`group`) y las variantes del mismo canal (720p, 1080p, marcas `*`…) se
-  agrupan en una sola tarjeta con sus fuentes ordenadas por calidad. Al pulsar la tarjeta se reproduce la
-  mejor fuente; desde el reproductor se cambia de fuente con un clic o se guarda en _Mis links_. Ver
-  [Catálogo de canales](#catálogo-de-canales).
+  agrupan en una sola tarjeta con sus fuentes ordenadas por calidad. Desde el reproductor se cambia de
+  fuente con un clic o se guarda en _Mis links_. Ver [Catálogo de canales](#catálogo-de-canales).
+- **Elección automática de fuente:** al pulsar la tarjeta de un canal con varias fuentes, la app pide al
+  motor los peers de todas (hasta 12 s) y reproduce la que más tenga; en empate, la de mejor calidad. Las
+  píldoras de fuente muestran los peers de cada una («9 peers», «sin peers», «no disponible»).
+  **Ver ya esta fuente** se salta la espera. Las píldoras de la tarjeta reproducen esa fuente
+  directamente, sin comprobar.
+- **Favoritos:** el corazón de cada tarjeta (o **Añadir a favoritos** en el reproductor) guarda el canal
+  en la estantería _Favoritos_, la primera de la pantalla.
+- **Seguir con…:** el botón junto al título de Canales vuelve al último canal visto con la misma fuente.
 - **Reproductor en formato teatro:** el vídeo se abre arriba a todo el ancho, con el título, el
   selector de fuentes y las acciones debajo.
-- **Vistos recientemente:** la primera estantería de Canales recuerda los últimos canales abiertos en
-  ese navegador.
+- **Vistos recientemente:** estantería con los últimos canales abiertos en ese navegador.
 - **La URL guarda el estado:** `?ver=<id>` es lo que se está viendo y `?vista=links` la pestaña.
   Recargar mantiene la reproducción, el botón _atrás_ (también el del móvil) cierra el reproductor y
   puedes compartir o guardar un enlace directo a un canal.
@@ -269,8 +294,8 @@ Una IP fija para el servidor (reserva DHCP en el router) evita que el acceso dir
 - **Estado del motor:** el punto de la cabecera consulta el motor cada 15 s mientras la pestaña está
   visible.
 
-Como los datos viven en el `localStorage` de cada navegador, el móvil y el ordenador tienen listas
-independientes. Usa **Exportar** e **Importar** para copiar la lista de uno a otro, y para tener copias de
+Como los datos (links, favoritos y vistos recientemente) viven en el `localStorage` de cada navegador,
+el móvil y el ordenador tienen listas independientes. Usa **Exportar** e **Importar** para copiar la lista de uno a otro, y para tener copias de
 seguridad.
 
 ## Catálogo de canales
@@ -400,6 +425,8 @@ src/
     engine.ts, format.ts, clipboard.ts, id.ts
     catalog.ts             Catálogo de canales: validación, agrupado por canal y búsqueda
     recent.ts, urlState.ts, theme.ts   Vistos recientemente, estado en la URL y tema
+    sources.ts             API JSON del motor: sesiones, peers y elección de la mejor fuente
+    favorites.ts, logo.ts  Favoritos y tamaño de los logos según la imagen
   styles/
     tokens.css             Colores, tipografías, espacios y radios (única fuente de diseño)
     base.css               Reset, elementos base y utilidades
@@ -415,6 +442,8 @@ docker/nginx.conf.template SPA + proxy inverso al motor
 Dockerfile                 Build multi-stage (Node → nginx)
 docker-compose.yml         Servicios acestream + web
 docker-compose.native.yml  Variante con el motor instalado en el equipo (Docker Desktop)
+deploy/docker-compose.yml  Instalación solo con Docker, con la imagen publicada en GHCR
+.github/workflows/ci.yml   Lint, tests y build en cada cambio; publica la imagen desde main
 windows/                   iniciar.cmd y actualizar.cmd para el uso en local con Windows
 ```
 

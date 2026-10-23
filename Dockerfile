@@ -11,7 +11,11 @@ RUN npm run build
 # ---------- nginx: SPA + proxy inverso al motor ----------
 FROM nginx:1.30-alpine
 
-COPY docker/nginx.conf /etc/nginx/conf.d/default.conf
+# Motor por defecto: el servicio "acestream" del compose. Se cambia con la variable ACE_ENGINE.
+ENV ACE_ENGINE=http://acestream:6878
+# La plantilla usa variables de nginx ($host, $uri…): solo se sustituyen las ACE_*.
+ENV NGINX_ENVSUBST_FILTER=^ACE_
+COPY docker/nginx.conf.template /etc/nginx/templates/default.conf.template
 COPY --from=build /app/dist /usr/share/nginx/html
 
 EXPOSE 80

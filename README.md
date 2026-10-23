@@ -1,7 +1,8 @@
 # Acestream Player
 
 Aplicación web personal para guardar, organizar y reproducir links de Acestream (`acestream://<id>` o
-IDs sueltos) desde el navegador, contra un motor de Acestream que corre en Docker en tu servidor casero.
+IDs sueltos) desde el navegador, contra un motor de Acestream que corre en Docker en tu servidor casero o en tu propio equipo
+(ver [Uso en local con Windows](#uso-en-local-con-windows)).
 
 Sin usuarios, sin backend y sin base de datos: la lista se guarda en el `localStorage` del navegador.
 
@@ -76,6 +77,39 @@ docker compose up -d
 ```
 
 Para una prueba puntual también vale `WEB_PORT=9000 docker compose up -d`.
+
+## Uso en local con Windows
+
+Para usarla en el mismo portátil o PC con Windows, sin servidor aparte. Usa el motor de
+[Ace Stream para Windows](https://www.acestream.org/) que ya tengas instalado en lugar del contenedor
+del motor, así no hay dos motores compitiendo por la red.
+
+**Una sola vez:**
+
+1. Instala [Docker Desktop](https://www.docker.com/products/docker-desktop/) y, en _Settings →
+   General_, activa **Start Docker Desktop when you sign in**.
+2. Comprueba que Ace Stream arranca con Windows (escucha en el puerto 6878).
+3. Copia tu catálogo de canales a `datacatalog.json`.
+4. Haz doble clic en `windowsiniciar.cmd`. Crea el `.env` (puerto 18080 y motor de Windows),
+   construye la app y la abre en `http://localhost:18080`.
+5. Guarda esa página en marcadores o instálala como app desde la barra de direcciones de Chrome o Edge.
+
+**Cada día:** abre el marcador. Docker Desktop arranca con Windows y el contenedor se levanta solo
+(`restart: unless-stopped`); si la página no carga justo después de encender, espera medio minuto
+y recarga.
+
+**Para actualizar:** doble clic en `windowsactualizar.cmd` (`git pull` y reconstrucción).
+
+Qué hace el `.env` que crea el script:
+
+```ini
+WEB_PORT=18080
+COMPOSE_FILE=docker-compose.yml;docker-compose.native.yml
+```
+
+`docker-compose.native.yml` desactiva el contenedor `acestream` y apunta nginx a
+`http://host.docker.internal:6878`, el motor del propio equipo. Para volver al motor en Docker,
+borra la línea `COMPOSE_FILE` y ejecuta `docker compose up -d`.
 
 ## Despliegue en un servidor Ubuntu
 
@@ -236,6 +270,8 @@ La app no incluye ningún canal: el catálogo lo pones tú. Formato:
   arrancar.
 - `docker compose logs acestream` para ver errores.
 - El servidor tiene que ser amd64 (la imagen no existe para ARM).
+- En modo local con Windows no hay contenedor del motor: comprueba que Ace Stream está abierto
+  (`http://localhost:6878/webui/api/service?method=get_version` debe responder).
 
 ### El stream no arranca o tarda mucho
 
@@ -331,9 +367,11 @@ src/
     links/                 Vista "Mis links": formulario, filtros y lista
     player/                Reproductor (teatro)
 docs/DESIGN.md             Sistema de diseño: tokens, composición y principios
-docker/nginx.conf          SPA + proxy inverso al motor
+docker/nginx.conf.template SPA + proxy inverso al motor
 Dockerfile                 Build multi-stage (Node → nginx)
 docker-compose.yml         Servicios acestream + web
+docker-compose.native.yml  Variante con el motor instalado en el equipo (Docker Desktop)
+windows/                   iniciar.cmd y actualizar.cmd para el uso en local con Windows
 ```
 
 Todas las funciones de `lib/` son puras y tienen tests (`*.test.ts`).

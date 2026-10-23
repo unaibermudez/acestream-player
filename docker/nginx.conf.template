@@ -1,5 +1,8 @@
 # Sirve la SPA y hace de proxy inverso hacia el motor de Acestream, todo en el mismo origen.
 # Así el navegador nunca habla directamente con el puerto 6878 (sin CORS ni mixed content).
+#
+# Es una plantilla: al arrancar, la imagen oficial de nginx sustituye las variables ACE_* (ver
+# NGINX_ENVSUBST_FILTER en el Dockerfile) y la copia a conf.d/default.conf.
 
 server {
     listen 80;
@@ -9,10 +12,12 @@ server {
     root /usr/share/nginx/html;
     index index.html;
 
-    # DNS interno de Docker. Con proxy_pass a una variable, nginx resuelve "acestream" en cada
+    # DNS interno de Docker. Con proxy_pass a una variable, nginx resuelve el motor en cada
     # petición: arranca aunque el motor aún no exista y sigue funcionando si se recrea con otra IP.
+    # ACE_ENGINE es http://acestream:6878 (motor en Docker) o http://host.docker.internal:6878
+    # (motor instalado en el propio equipo, ver docker-compose.native.yml).
     resolver 127.0.0.11 valid=10s ipv6=off;
-    set $ace_engine http://acestream:6878;
+    set $ace_engine ${ACE_ENGINE};
 
     # ---------- Motor de Acestream ----------
 
@@ -50,6 +55,7 @@ server {
         sub_filter "http://127.0.0.1:6878/" "/";
         sub_filter "http://localhost:6878/" "/";
         sub_filter "http://acestream:6878/" "/";
+        sub_filter "http://host.docker.internal:6878/" "/";
 
         add_header Cache-Control "no-store" always;
     }

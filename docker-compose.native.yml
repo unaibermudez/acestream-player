@@ -1,0 +1,16 @@
+# Variante para usar el motor de Acestream instalado en el propio equipo (por ejemplo, Ace Stream
+# para Windows) en lugar del contenedor "acestream". Se activa desde .env:
+#
+#   COMPOSE_FILE=docker-compose.yml;docker-compose.native.yml   (en macOS, separado por ":")
+#
+# Pensado para Docker Desktop (Windows y macOS), que resuelve host.docker.internal hacia el equipo.
+# El motor del equipo debe estar arrancado y escuchando en el puerto 6878.
+services:
+  # No se arranca: sin el perfil "docker-engine" activo, compose lo ignora.
+  acestream:
+    profiles: ['docker-engine']
+
+  web:
+    depends_on: !reset []
+    environment:
+      ACE_ENGINE: http://host.docker.internal:6878

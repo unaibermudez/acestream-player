@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef, useState } from 'react'
 import { AddLinksForm } from './components/AddLinksForm'
 import { FilterBar } from './components/FilterBar'
 import { LinkList } from './components/LinkList'
+import { Player } from './components/Player'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useLinks } from './hooks/useLinks'
 import { collectTags, EMPTY_FILTER, filterLinks, type LinkFilter } from './lib/filter'
@@ -48,7 +49,7 @@ export default function App() {
       <main className={`app-main${active ? ' app-main--playing' : ''}`}>
         <section className="player-pane" aria-label="Reproductor">
           {active ? (
-            <div className="player-placeholder">{active.name}</div>
+            <Player key={active.id} link={active} onClose={() => setActiveId(null)} />
           ) : (
             <div className="player-placeholder">Elige un link de la lista para reproducirlo.</div>
           )}

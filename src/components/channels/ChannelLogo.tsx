@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { logoFit, type LogoFit } from '../../lib/logo'
 
 function initials(name: string): string {
   const words = name
@@ -13,22 +14,24 @@ function initials(name: string): string {
   )
 }
 
-type LogoState = 'loading' | 'loaded' | 'failed'
+type LogoState = 'loading' | 'failed' | LogoFit
 
 /**
  * Placa del logo. Mientras carga, o si falla, muestra las iniciales en serif; el fondo negro
  * (necesario para logos claros con transparencia) solo aparece cuando la imagen ha cargado.
+ * El tamaño depende de la imagen: los carteles llenan la placa y los iconos pequeños llevan aire.
  */
 export function ChannelLogo({ src, name }: { src: string | null; name: string }) {
   const [state, setState] = useState<LogoState>('loading')
   const showImage = src !== null && state !== 'failed'
+  const loaded = state !== 'loading' && state !== 'failed'
 
   return (
     <span
-      className={`plate${state === 'loaded' && showImage ? ' plate--loaded' : ''}`}
+      className={`plate${loaded && showImage ? ` plate--loaded plate--${state}` : ''}`}
       aria-hidden="true"
     >
-      {state !== 'loaded' && <span className="plate__initials">{initials(name)}</span>}
+      {!loaded && <span className="plate__initials">{initials(name)}</span>}
       {showImage && (
         <img
           src={src}
@@ -38,7 +41,9 @@ export function ChannelLogo({ src, name }: { src: string | null; name: string })
           loading="lazy"
           decoding="async"
           referrerPolicy="no-referrer"
-          onLoad={() => setState('loaded')}
+          onLoad={(e) =>
+            setState(logoFit(e.currentTarget.naturalWidth, e.currentTarget.naturalHeight))
+          }
           onError={() => setState('failed')}
         />
       )}

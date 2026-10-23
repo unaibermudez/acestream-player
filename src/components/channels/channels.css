@@ -284,6 +284,16 @@
   opacity: 1;
 }
 
+/* Tamaño según la imagen (ver lib/logo.ts): carteles a sangre, logos medianos e iconos con aire.
+   El padding en % se calcula sobre el ancho: el vertical va más bajo para no aplastar los iconos altos. */
+.plate--logo img {
+  padding: 6% 10%;
+}
+
+.plate--icon img {
+  padding: 10% 18%;
+}
+
 .plate__initials {
   color: var(--muted);
   font-family: var(--font-serif);

@@ -16,8 +16,8 @@ function initials(name: string): string {
 type LogoState = 'loading' | 'loaded' | 'failed'
 
 /**
- * Placa del logo. Mientras carga, o si falla, muestra las iniciales en serif; el fondo blanco
- * (necesario para logos oscuros con transparencia) solo aparece cuando la imagen ha cargado.
+ * Placa del logo. Mientras carga, o si falla, muestra las iniciales en serif; el fondo negro
+ * (necesario para logos claros con transparencia) solo aparece cuando la imagen ha cargado.
  */
 export function ChannelLogo({ src, name }: { src: string | null; name: string }) {
   const [state, setState] = useState<LogoState>('loading')

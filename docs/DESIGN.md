@@ -98,6 +98,8 @@ texto y 1.1 en titulares serif.
   las acciones van de dos en dos.
 - `.search` no lleva `flex` propio: en una columna flex, `flex-basis` se convierte en altura. Lo fija
   cada contenedor que lo usa.
+- Los logos van a sangre (sin margen) sobre fondo negro en ambos temas: la mayoría de los logos del
+  catálogo son blancos o claros sobre transparente y desaparecían sobre blanco.
 - Solo se cargan los subconjuntos `latin` de las fuentes; cubren el español.
 - Directrices de Vercel aplicadas: enlaces reales para navegar (Ctrl+clic funciona), estado en la
   URL, deshacer en lugar de confirmar al borrar, `aria-live` en avisos, `translate="no"` en marcas,

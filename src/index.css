@@ -254,14 +254,11 @@ code {
   display: none;
 }
 
-/* Móvil: el reproductor se queda fijo arriba mientras se recorre la lista. */
+/* Móvil: el reproductor ocupa todo el ancho, encima de la lista. */
 @media (max-width: 899px) {
   .player-pane {
-    position: sticky;
-    top: var(--header-h);
-    z-index: 5;
     margin: -1rem -1rem 0;
-    background: var(--bg);
+    scroll-margin-top: var(--header-h);
   }
 }
 
@@ -680,9 +677,18 @@ kbd {
 
 @media (max-width: 599px) {
   .hide-narrow,
-  .engine-status__label,
-  .app-header__title {
+  .engine-status__label {
     display: none;
+  }
+
+  /* Se oculta a la vista pero sigue disponible para lectores de pantalla. */
+  .app-header__title {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip-path: inset(50%);
+    white-space: nowrap;
   }
 
   .engine-status {

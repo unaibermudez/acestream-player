@@ -6,6 +6,10 @@ const engineUrl = process.env.ACE_ENGINE_URL ?? 'http://localhost:6878'
 
 export default defineConfig({
   plugins: [react()],
+  build: {
+    // hls.js (~575 kB sin comprimir) va en un chunk propio que solo se carga al reproducir.
+    chunkSizeWarningLimit: 600,
+  },
   server: {
     proxy: {
       '/ace': { target: engineUrl, changeOrigin: true },

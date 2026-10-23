@@ -82,7 +82,8 @@ export function Player({ link, onClose }: Props) {
         <video
           ref={videoRef}
           className="player__video"
-          controls
+          // Sin controles nativos mientras hay un overlay: evita el spinner nativo detrás del nuestro.
+          controls={status !== 'loading' && status !== 'error' && status !== 'blocked'}
           playsInline
           preload="auto"
           onDoubleClick={toggleFullscreen}

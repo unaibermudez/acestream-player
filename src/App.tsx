@@ -24,6 +24,7 @@ export default function App() {
   const [activeId, setActiveId] = useState<string | null>(null)
   const [notice, setNotice] = useState<Notice | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+  const playerPaneRef = useRef<HTMLElement>(null)
 
   const tags = useMemo(() => collectTags(links), [links])
   const visible = useMemo(() => filterLinks(links, filter), [links, filter])
@@ -39,6 +40,12 @@ export default function App() {
     (link: StreamLink) => {
       setActiveId(link.id)
       markPlayed(link.id)
+      // En móvil el reproductor está encima de la lista: se sube hasta él.
+      if (window.matchMedia('(max-width: 899px)').matches) {
+        requestAnimationFrame(() =>
+          playerPaneRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' }),
+        )
+      }
     },
     [markPlayed],
   )
@@ -113,7 +120,7 @@ export default function App() {
       )}
 
       <main className={`app-main${active ? ' app-main--playing' : ''}`}>
-        <section className="player-pane" aria-label="Reproductor">
+        <section className="player-pane" aria-label="Reproductor" ref={playerPaneRef}>
           {active ? (
             <Player key={active.id} link={active} onClose={() => setActiveId(null)} />
           ) : (

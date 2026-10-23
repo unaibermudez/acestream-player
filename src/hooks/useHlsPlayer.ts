@@ -1,4 +1,6 @@
-import Hls, { type ErrorData, type HlsConfig, type LoaderConfig } from 'hls.js'
+// Solo tipos: la librería se carga bajo demanda al abrir el reproductor (chunk aparte).
+import type HlsClass from 'hls.js'
+import type { ErrorData, HlsConfig, LoaderConfig } from 'hls.js'
 import { useEffect, useState, type RefObject } from 'react'
 import {
   choosePlaybackMode,
@@ -45,7 +47,7 @@ const HLS_CONFIG: Partial<HlsConfig> = {
   fragLoadPolicy: loadPolicy(30_000, 60_000, 4, 6),
 }
 
-function failureFromHls(data: ErrorData): PlaybackFailure {
+function failureFromHls(Hls: typeof HlsClass, data: ErrorData): PlaybackFailure {
   if (data.type === Hls.ErrorTypes.MEDIA_ERROR) return { kind: 'media', details: data.details }
   if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
     if (data.details === Hls.ErrorDetails.MANIFEST_LOAD_TIMEOUT) return { kind: 'timeout' }
@@ -95,7 +97,7 @@ export function useHlsPlayer(
 
     let disposed = false
     let started = false
-    let hls: Hls | null = null
+    let hls: HlsClass | null = null
     let recoveredMedia = false
 
     const set = (status: PlayerStatus, error: PlayerErrorMessage | null = null) => {
@@ -140,40 +142,49 @@ export function useHlsPlayer(
     video.addEventListener('waiting', onWaiting)
     video.addEventListener('pause', onPause)
 
-    const mode = choosePlaybackMode({
-      nativeHls: video.canPlayType('application/vnd.apple.mpegurl') !== '',
-      mse: Hls.isSupported(),
-      userAgent: navigator.userAgent,
-      maxTouchPoints: navigator.maxTouchPoints,
-    })
-
     const onNativeError = () => {
       void diagnoseNativeError(src, video).then(fail)
     }
 
-    if (mode === 'hlsjs') {
-      const instance = new Hls(HLS_CONFIG)
-      hls = instance
-      instance.on(Hls.Events.MANIFEST_PARSED, tryPlay)
-      instance.on(Hls.Events.ERROR, (_event, data) => {
-        if (!data.fatal) return
-        if (data.type === Hls.ErrorTypes.MEDIA_ERROR && !recoveredMedia) {
-          recoveredMedia = true
-          instance.recoverMediaError()
-          return
-        }
-        fail(failureFromHls(data))
+    const start = async () => {
+      const { default: Hls } = await import('hls.js')
+      if (disposed) return
+
+      const mode = choosePlaybackMode({
+        nativeHls: video.canPlayType('application/vnd.apple.mpegurl') !== '',
+        mse: Hls.isSupported(),
+        userAgent: navigator.userAgent,
+        maxTouchPoints: navigator.maxTouchPoints,
       })
-      instance.loadSource(src)
-      instance.attachMedia(video)
-    } else if (mode === 'native') {
-      video.addEventListener('error', onNativeError)
-      video.src = src
-      tryPlay()
-    } else {
-      // Se difiere para no actualizar el estado de forma síncrona dentro del efecto.
-      queueMicrotask(() => fail({ kind: 'unsupported' }))
+
+      if (mode === 'hlsjs') {
+        const instance = new Hls(HLS_CONFIG)
+        hls = instance
+        instance.on(Hls.Events.MANIFEST_PARSED, tryPlay)
+        instance.on(Hls.Events.ERROR, (_event, data) => {
+          if (!data.fatal) return
+          if (data.type === Hls.ErrorTypes.MEDIA_ERROR && !recoveredMedia) {
+            recoveredMedia = true
+            instance.recoverMediaError()
+            return
+          }
+          fail(failureFromHls(Hls, data))
+        })
+        instance.loadSource(src)
+        instance.attachMedia(video)
+      } else if (mode === 'native') {
+        video.addEventListener('error', onNativeError)
+        video.src = src
+        tryPlay()
+      } else {
+        fail({ kind: 'unsupported' })
+      }
     }
+
+    start().catch((error: unknown) => {
+      // Normalmente, un fallo de red al descargar el chunk de hls.js.
+      fail({ kind: 'other', details: error instanceof Error ? error.message : String(error) })
+    })
 
     return () => {
       disposed = true

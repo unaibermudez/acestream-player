@@ -12,3 +12,5 @@ docker-compose.yml
 hashes.json
 catalog.json
 public/catalog.json
+data
+public/data

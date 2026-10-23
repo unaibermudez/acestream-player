@@ -84,9 +84,9 @@ export function ChannelsView({
     "group": "CATEGORÍA", "logo": "https://…" }
 ] }`}</pre>
         <p className="catalog-empty__hint">
-          Las variantes del mismo canal (720p, 1080p, marcas <code>*</code>…) se agrupan solas. El
-          catálogo se guarda en este navegador. También se carga automáticamente si dejas un{' '}
-          <code>catalog.json</code> servido junto a la app.
+          Las variantes del mismo canal (720p, 1080p, marcas <code>*</code>…) se agrupan solas. Lo
+          más cómodo es dejarlo en el servidor como <code>data/catalog.json</code>: se carga solo en
+          todos los dispositivos. Si no, puedes cargarlo aquí y se guardará en este navegador.
         </p>
         <button
           type="button"
@@ -120,16 +120,21 @@ export function ChannelsView({
           aria-label="Buscar canales"
           autoComplete="off"
         />
-        <button
-          type="button"
-          className="button"
-          onClick={() => fileRef.current?.click()}
-          title="Reemplazar el catálogo por otro archivo JSON"
-        >
-          <UploadIcon />
-          <span className="hide-narrow">Catálogo</span>
-        </button>
-        {fileInput}
+        {/* Con catálogo de servidor no se importa en el navegador: se actualiza el archivo. */}
+        {source !== 'server' && (
+          <>
+            <button
+              type="button"
+              className="button"
+              onClick={() => fileRef.current?.click()}
+              title="Reemplazar el catálogo por otro archivo JSON"
+            >
+              <UploadIcon />
+              <span className="hide-narrow">Catálogo</span>
+            </button>
+            {fileInput}
+          </>
+        )}
       </div>
 
       <div className="channels__categories" role="group" aria-label="Categorías">
@@ -179,6 +184,13 @@ export function ChannelsView({
           </ul>
         </section>
       ))}
+
+      {source === 'server' && (
+        <p className="channels__footer">
+          Catálogo del servidor (<code>data/catalog.json</code>). Para actualizarlo, sustituye el
+          archivo y recarga la página.
+        </p>
+      )}
 
       {source === 'local' && (
         <p className="channels__footer">

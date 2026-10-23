@@ -3,8 +3,11 @@ import { groupCatalog, parseCatalog } from '../lib/catalog'
 import { createDefaultCatalogStorage, type CatalogStorage } from '../lib/storage'
 import type { CatalogEntry, ChannelCategory } from '../types/catalog'
 
-/** Archivo opcional servido junto a la app; se usa si no hay catálogo importado en el navegador. */
-export const SERVER_CATALOG_URL = '/catalog.json'
+/**
+ * Catálogo del servidor: carpeta `data/` montada en el contenedor (en desarrollo, `public/data/`).
+ * Si existe, tiene prioridad sobre el importado en el navegador y es el mismo para todos los dispositivos.
+ */
+export const SERVER_CATALOG_URL = '/data/catalog.json'
 
 export type CatalogSource = 'none' | 'local' | 'server'
 
@@ -22,7 +25,7 @@ export interface CatalogApi {
 async function fetchServerCatalog(): Promise<CatalogEntry[]> {
   try {
     const response = await fetch(SERVER_CATALOG_URL, { cache: 'no-store' })
-    // Sin archivo, el servidor devuelve index.html (fallback de la SPA): se descarta.
+    // nginx responde 404 si falta; el content-type protege además del fallback de la SPA en dev.
     if (!response.ok || !response.headers.get('content-type')?.includes('json')) return []
     return parseCatalog(await response.json())?.entries ?? []
   } catch {
@@ -35,29 +38,26 @@ export function useCatalog(storage: CatalogStorage = defaultStorage()): CatalogA
   const [source, setSource] = useState<CatalogSource>('none')
   const [loaded, setLoaded] = useState(false)
 
-  const loadFallback = useCallback(async () => {
+  /** Servidor primero; si no tiene catálogo, el importado en este navegador. */
+  const load = useCallback(async () => {
     const remote = await fetchServerCatalog()
-    setEntries(remote)
-    setSource(remote.length > 0 ? 'server' : 'none')
-  }, [])
+    if (remote.length > 0) return { entries: remote, source: 'server' as const }
+    const local = await storage.load()
+    return { entries: local, source: local.length > 0 ? ('local' as const) : ('none' as const) }
+  }, [storage])
 
   useEffect(() => {
     let cancelled = false
-    void (async () => {
-      const local = await storage.load()
+    void load().then((result) => {
       if (cancelled) return
-      if (local.length > 0) {
-        setEntries(local)
-        setSource('local')
-      } else {
-        await loadFallback()
-      }
-      if (!cancelled) setLoaded(true)
-    })()
+      setEntries(result.entries)
+      setSource(result.source)
+      setLoaded(true)
+    })
     return () => {
       cancelled = true
     }
-  }, [storage, loadFallback])
+  }, [load])
 
   const importText = useCallback(
     (text: string): CatalogImportResult => {
@@ -84,8 +84,14 @@ export function useCatalog(storage: CatalogStorage = defaultStorage()): CatalogA
   )
 
   const clear = useCallback(() => {
-    void storage.clear().then(loadFallback)
-  }, [storage, loadFallback])
+    void storage
+      .clear()
+      .then(load)
+      .then((result) => {
+        setEntries(result.entries)
+        setSource(result.source)
+      })
+  }, [storage, load])
 
   const categories = useMemo(() => groupCatalog(entries), [entries])
 

@@ -26,7 +26,10 @@ dist-ssr
 # Configuración local de docker compose
 .env
 
-# Catálogos de canales locales: se cargan en tiempo de ejecución, no se versionan
+# Catálogos de canales: se cargan en tiempo de ejecución, no se versionan
 hashes.json
 catalog.json
 public/catalog.json
+public/data/
+data/*
+!data/README.md

@@ -42,16 +42,17 @@ devuelve `500 failed to load content` ante un ID inexistente.
 
 Para desarrollo: Node.js 22 o superior (probado con 24).
 
-## Arranque
+## Arranque rápido
 
 ```bash
 git clone git@github.com:unaibermudez/acestream-player.git
 cd acestream-player
+cp /ruta/a/tu/catalogo.json data/catalog.json   # opcional: canales para todos los dispositivos
 docker compose up -d --build
 ```
 
-La app queda en `http://HOST:8080`. Pega un `acestream://…`, pulsa **Guardar** y después pulsa el link
-para reproducirlo.
+La app queda en `http://HOST:8080`. Para el despliegue completo en el servidor, ver
+[Despliegue en un servidor Ubuntu](#despliegue-en-un-servidor-ubuntu).
 
 Comandos útiles:
 
@@ -75,6 +76,73 @@ docker compose up -d
 ```
 
 Para una prueba puntual también vale `WEB_PORT=9000 docker compose up -d`.
+
+## Despliegue en un servidor Ubuntu
+
+Probado en local; los pasos son para un Ubuntu Server x86-64 (22.04 o posterior).
+
+**1. Docker y Compose**
+
+```bash
+curl -fsSL https://get.docker.com | sudo sh
+sudo usermod -aG docker $USER   # cierra sesión y vuelve a entrar para aplicarlo
+docker compose version          # debe mostrar Compose v2
+```
+
+**2. Acceso al repositorio privado con una clave de despliegue (solo lectura)**
+
+```bash
+ssh-keygen -t ed25519 -f ~/.ssh/acestream_deploy -N "" -C "acestream-player deploy"
+cat ~/.ssh/acestream_deploy.pub
+```
+
+Añade esa clave pública en GitHub → repositorio → _Settings → Deploy keys_ (sin permiso de escritura).
+Después:
+
+```bash
+cat >> ~/.ssh/config <<'EOF'
+Host github-acestream
+  HostName github.com
+  IdentityFile ~/.ssh/acestream_deploy
+  IdentitiesOnly yes
+EOF
+git clone git@github-acestream:unaibermudez/acestream-player.git ~/acestream-player
+cd ~/acestream-player
+```
+
+**3. Configuración y catálogo**
+
+```bash
+cp .env.example .env                       # cambia WEB_PORT si 8080 está ocupado
+scp catalogo.json servidor:~/acestream-player/data/catalog.json   # desde tu PC
+```
+
+**4. Arrancar**
+
+```bash
+docker compose up -d --build
+docker compose ps        # acestream y web deben acabar en «healthy»
+```
+
+**5. Red**
+
+```bash
+sudo ufw allow 8080/tcp  # o el puerto de WEB_PORT
+hostname -I              # IP del servidor
+```
+
+Reserva esa IP en el DHCP del router para que no cambie. **No redirijas el puerto en el router**: la
+app no tiene autenticación. Para usarla fuera de casa, mejor una VPN como Tailscale.
+
+**Actualizar**
+
+```bash
+cd ~/acestream-player
+git pull && docker compose up -d --build     # nueva versión de la app
+docker compose pull acestream && docker compose up -d   # nueva versión del motor
+```
+
+El catálogo se actualiza sustituyendo `data/catalog.json`: no hace falta reiniciar nada.
 
 ## Acceso desde el móvil en tu red local
 
@@ -105,7 +173,8 @@ Una IP fija para el servidor (reserva DHCP en el router) evita que el acceso dir
 - **Importar/Exportar** (cabecera): exporta toda la lista en JSON. Importa ese mismo JSON, listas
   **M3U/M3U8** (usa el título de `#EXTINF` como nombre y `group-title` como etiqueta) o texto con un link
   por línea. El formato se detecta por el contenido.
-- **Canales** (pantalla principal): carga un catálogo JSON propio con el botón _Catálogo_. Los canales
+- **Canales** (pantalla principal): muestra el catálogo de `data/catalog.json` del servidor (o uno
+  cargado en el navegador con el botón _Catálogo_). Los canales
   se muestran por categoría (`group`) y las variantes del mismo canal (720p, 1080p, marcas `*`…) se
   agrupan en una sola tarjeta con sus fuentes ordenadas por calidad. Al pulsar la tarjeta se reproduce la
   mejor fuente; desde el reproductor se cambia de fuente con un clic o se guarda en _Mis links_. Ver
@@ -139,17 +208,14 @@ La app no incluye ningún canal: el catálogo lo pones tú. Formato:
 - Agrupación: se quita del título la calidad (`720p`, `1080p`, `4K`, `HD`…) y las marcas finales
   (`*`, `**`); lo que queda es el nombre del canal dentro de su categoría.
 - Dos formas de cargarlo:
-  1. **Botón _Catálogo_** en la pestaña Canales: se guarda en el navegador (cada dispositivo el suyo).
-  2. **`catalog.json` servido junto a la app**: si el navegador no tiene catálogo propio, se carga
-     `/catalog.json` automáticamente. En desarrollo basta con dejarlo en `public/catalog.json`; en
-     Docker, móntalo en el contenedor `web`:
-     ```yaml
-     volumes:
-       - ./catalog.json:/usr/share/nginx/html/catalog.json:ro
-     ```
-     (crea el archivo antes de `docker compose up`: si no existe, Docker crearía un directorio).
-- `hashes.json`, `catalog.json` y `public/catalog.json` están en `.gitignore`: el catálogo no se
-  versiona.
+  1. **En el servidor (recomendado):** deja el archivo en `data/catalog.json`. La carpeta `data/` se
+     monta en el contenedor `web` y la app la lee de `/data/catalog.json` en todos los dispositivos.
+     Tiene prioridad sobre el catálogo del navegador. Para actualizarlo, sustituye el archivo y recarga.
+     En desarrollo, el equivalente es `public/data/catalog.json`.
+  2. **Botón _Catálogo_** en la pestaña Canales, solo si el servidor no tiene catálogo: se guarda en ese
+     navegador.
+- El contenido de `data/` y `public/data/` (y `hashes.json`) está en `.gitignore` y en
+  `.dockerignore`: el catálogo no se versiona ni se mete en la imagen.
 - Los logos se cargan desde sus URLs originales (sin enviar `Referer`); si fallan, se muestran las
   iniciales.
 

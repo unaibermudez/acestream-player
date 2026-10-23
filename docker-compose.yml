@@ -35,3 +35,7 @@ services:
     ports:
       # Único puerto expuesto. Cambia el número de la izquierda (o define WEB_PORT en .env).
       - '${WEB_PORT:-8080}:80'
+    volumes:
+      # Carpeta (no archivo suelto) con el catálogo: data/catalog.json se sirve en /data/catalog.json.
+      # Se puede sustituir el archivo en caliente; no hace falta reiniciar ni reconstruir.
+      - ./data:/usr/share/nginx/html/data:ro

@@ -1,5 +1,7 @@
 # ---------- Build del frontend ----------
-FROM node:24-alpine AS build
+# El build genera archivos estáticos: se hace en la plataforma del equipo que construye, también
+# al publicar la imagen para arm64 (sin emulación).
+FROM --platform=$BUILDPLATFORM node:24-alpine AS build
 WORKDIR /app
 
 COPY package.json package-lock.json ./

@@ -1,0 +1,43 @@
+# Instalación solo con Docker, sin descargar el código: usa la imagen publicada de la app.
+#
+#   mkdir acestream-player && cd acestream-player
+#   curl -fsSLO https://raw.githubusercontent.com/unaibermudez/acestream-player/main/deploy/docker-compose.yml
+#   docker compose up -d
+#
+# La app queda en http://localhost:8080 (cambia el puerto con WEB_PORT en un archivo .env).
+# Catálogo de canales opcional en ./data/catalog.json. Para actualizar:
+#   docker compose pull && docker compose up -d
+name: acestream-player
+
+services:
+  # Motor de Acestream (solo amd64). No se publica: solo lo alcanza nginx.
+  acestream:
+    image: ghcr.io/martinbjeldbak/acestream-http-proxy:latest
+    restart: unless-stopped
+    environment:
+      ALLOW_REMOTE_ACCESS: 'yes'
+    expose:
+      - '6878'
+    healthcheck:
+      test:
+        [
+          'CMD',
+          'python3',
+          '-c',
+          'import urllib.request; urllib.request.urlopen("http://127.0.0.1:6878/webui/api/service?method=get_version&format=json", timeout=4)',
+        ]
+      interval: 30s
+      timeout: 5s
+      start_period: 30s
+      retries: 3
+
+  # La app: SPA y proxy inverso de /ace/ hacia el motor.
+  web:
+    image: ghcr.io/unaibermudez/acestream-player:latest
+    restart: unless-stopped
+    depends_on:
+      - acestream
+    ports:
+      - '${WEB_PORT:-8080}:80'
+    volumes:
+      - ./data:/usr/share/nginx/html/data:ro

@@ -10,11 +10,22 @@ interface Props {
   note: string
   channels: Channel[]
   activeContentId: string | null
-  onPlay(channel: Channel, variant: ChannelVariant): void
+  favorites: ReadonlySet<string>
+  onPlay(channel: Channel, variant: ChannelVariant, auto: boolean): void
+  onToggleFavorite(channel: Channel): void
 }
 
 /** Estantería horizontal: scroll con el dedo o la rueda, y flechas en pantallas con ratón. */
-export function ChannelShelf({ id, title, note, channels, activeContentId, onPlay }: Props) {
+export function ChannelShelf({
+  id,
+  title,
+  note,
+  channels,
+  activeContentId,
+  favorites,
+  onPlay,
+  onToggleFavorite,
+}: Props) {
   const trackRef = useRef<HTMLUListElement>(null)
   const [edges, setEdges] = useState({ start: true, end: true })
 
@@ -80,7 +91,9 @@ export function ChannelShelf({ id, title, note, channels, activeContentId, onPla
             key={channel.key}
             channel={channel}
             activeContentId={activeContentId}
+            favorite={favorites.has(channel.key)}
             onPlay={onPlay}
+            onToggleFavorite={onToggleFavorite}
           />
         ))}
       </ul>

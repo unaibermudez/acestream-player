@@ -140,6 +140,18 @@
   font-variant-numeric: tabular-nums;
 }
 
+/* Dato secundario dentro de la píldora (peers de una fuente). */
+.chip__note {
+  margin-left: 0.35rem;
+  opacity: 0.75;
+}
+
+/* Fuente que no responde: sigue pulsable, pero en segundo plano. */
+.chip--dim:not([aria-pressed='true']) {
+  border-style: dashed;
+  color: var(--muted);
+}
+
 @media (pointer: coarse) {
   .chip,
   .chip--data,

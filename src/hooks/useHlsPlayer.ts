@@ -15,7 +15,8 @@ import {
  */
 export const START_TIMEOUT_MS = 90_000
 
-export type PlayerStatus = 'loading' | 'playing' | 'buffering' | 'paused' | 'blocked' | 'error'
+export type PlayerStatus =
+  'idle' | 'loading' | 'playing' | 'buffering' | 'paused' | 'blocked' | 'error'
 
 export interface PlayerState {
   status: PlayerStatus
@@ -82,10 +83,11 @@ interface KeyedState extends PlayerState {
 /**
  * Reproduce `src` en el <video> referenciado: hls.js en la mayoría de navegadores y HLS nativo en
  * Safari/iOS. Cambiar `src` o `attempt` destruye la instancia anterior y empieza de cero.
+ * Con `src` a `null` no se carga nada (estado `idle`).
  */
 export function useHlsPlayer(
   videoRef: RefObject<HTMLVideoElement | null>,
-  src: string,
+  src: string | null,
   attempt: number,
 ): PlayerState {
   const key = `${src}#${attempt}`
@@ -93,7 +95,7 @@ export function useHlsPlayer(
 
   useEffect(() => {
     const video = videoRef.current
-    if (!video) return
+    if (!video || src === null) return
 
     let disposed = false
     let started = false
@@ -202,5 +204,6 @@ export function useHlsPlayer(
     }
   }, [videoRef, src, key])
 
+  if (src === null) return { status: 'idle', error: null }
   return state.key === key ? state : { status: 'loading', error: null }
 }

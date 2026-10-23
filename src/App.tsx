@@ -7,9 +7,11 @@ import { LinksView } from './components/links/LinksView'
 import { Player, type PlayerSource } from './components/player/Player'
 import { useCatalog } from './hooks/useCatalog'
 import { useEngineStatus } from './hooks/useEngineStatus'
+import { useFavorites } from './hooks/useFavorites'
 import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import { useLinks } from './hooks/useLinks'
 import { useRecentChannels } from './hooks/useRecentChannels'
+import { useSourceProbe } from './hooks/useSourceProbe'
 import { useTheme } from './hooks/useTheme'
 import { useUrlState } from './hooks/useUrlState'
 import { parseImport } from './lib/exchange'
@@ -19,6 +21,8 @@ import type { StreamLink } from './types/stream'
 
 interface NowPlaying {
   contentId: string
+  /** Canal del catálogo al que pertenece, si es uno. */
+  channelKey?: string
   title: string
   subtitle?: string
   sources: PlayerSource[]
@@ -34,6 +38,7 @@ export default function App() {
   const engine = useEngineStatus()
   const { theme, toggle: toggleTheme } = useTheme()
   const { recent, remember } = useRecentChannels()
+  const { favorites, toggle: toggleFavorite } = useFavorites()
   const url = useUrlState()
   const [toast, setToast] = useState<ToastMessage | null>(null)
   const searchRef = useRef<HTMLInputElement>(null)
@@ -63,6 +68,22 @@ export default function App() {
     [recent, byKey],
   )
 
+  const favoriteSet = useMemo(() => new Set(favorites), [favorites])
+  const favoriteChannels = useMemo(
+    () => favorites.map((key) => byKey.get(key)).filter((c): c is Channel => !!c),
+    [favorites, byKey],
+  )
+
+  // Último canal visto con la fuente que se usó, para el botón "Seguir con…".
+  const resume = useMemo(() => {
+    const last = recent[0]
+    const channel = last ? byKey.get(last.channelKey) : undefined
+    if (!last || !channel) return null
+    const variant =
+      channel.variants.find((v) => v.contentId === last.contentId) ?? channel.variants[0]
+    return variant ? { channel, variant } : null
+  }, [recent, byKey])
+
   const playingId = url.state.playing
   const activeLink = playingId ? (links.find((link) => link.contentId === playingId) ?? null) : null
 
@@ -73,6 +94,7 @@ export default function App() {
     if (match) {
       return {
         contentId: playingId,
+        channelKey: match.channel.key,
         title: match.channel.name,
         subtitle: match.channel.category,
         sources: match.channel.variants,
@@ -100,6 +122,23 @@ export default function App() {
     document.title = nowPlaying ? `${nowPlaying.title} · Acestream` : 'Acestream Player'
   }, [nowPlaying])
 
+  // Elección automática de fuente: al abrir un canal desde su placa se comprueban los peers de
+  // todas sus fuentes y se pasa a la mejor. Solo mientras se siga en ese mismo canal.
+  const [autoChannel, setAutoChannel] = useState<string | null>(null)
+  const probing = autoChannel !== null && autoChannel === nowPlaying?.channelKey
+  const probeIds = useMemo(
+    () => (probing ? (byKey.get(autoChannel)?.variants.map((v) => v.contentId) ?? null) : null),
+    [probing, autoChannel, byKey],
+  )
+  const probe = useSourceProbe(probeIds)
+  const appliedProbe = useRef<string | null>(null)
+
+  useEffect(() => {
+    if (!probing || probe.phase !== 'done' || appliedProbe.current === autoChannel) return
+    appliedProbe.current = autoChannel
+    if (probe.best && probe.best !== playingId) url.play(probe.best)
+  }, [probing, probe.phase, probe.best, autoChannel, playingId, url])
+
   const revealStage = useCallback(() => {
     const reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     requestAnimationFrame(() =>
@@ -108,12 +147,19 @@ export default function App() {
   }, [])
 
   const playChannel = useCallback(
-    (channel: Channel, variant: ChannelVariant) => {
+    (channel: Channel, variant: ChannelVariant, auto: boolean) => {
+      appliedProbe.current = null
+      setAutoChannel(auto && channel.variants.length > 1 ? channel.key : null)
       url.play(variant.contentId)
       remember(channel.key, variant.contentId)
       revealStage()
     },
     [url, remember, revealStage],
+  )
+
+  const toggleChannelFavorite = useCallback(
+    (channel: Channel) => toggleFavorite(channel.key),
+    [toggleFavorite],
   )
 
   const playLink = useCallback(
@@ -127,11 +173,13 @@ export default function App() {
 
   const selectSource = useCallback(
     (source: PlayerSource) => {
+      // Elegir a mano manda: si aún se estaban comprobando las fuentes, se deja de hacerlo.
+      probe.cancel(source.contentId)
       const match = byContentId.get(source.contentId)
       if (match) remember(match.channel.key, source.contentId)
       url.play(source.contentId)
     },
-    [byContentId, remember, url],
+    [byContentId, remember, url, probe],
   )
 
   const remove = useCallback(
@@ -220,6 +268,15 @@ export default function App() {
               contentId={nowPlaying.contentId}
               sources={nowPlaying.sources}
               onSelectSource={selectSource}
+              checking={probing && probe.phase === 'checking'}
+              health={probing ? probe.health : undefined}
+              onSkipCheck={() => probe.cancel(nowPlaying.contentId)}
+              favorite={nowPlaying.channelKey ? favoriteSet.has(nowPlaying.channelKey) : false}
+              onToggleFavorite={
+                nowPlaying.channelKey
+                  ? () => nowPlaying.channelKey && toggleFavorite(nowPlaying.channelKey)
+                  : undefined
+              }
               onSave={save}
               saved={links.some((link) => link.contentId === nowPlaying.contentId)}
               onClose={url.close}
@@ -231,11 +288,15 @@ export default function App() {
           <ChannelsView
             categories={catalog.categories}
             recent={recentChannels}
+            favoriteChannels={favoriteChannels}
+            favorites={favoriteSet}
+            resume={resume}
             source={catalog.source}
             loaded={catalog.loaded}
             activeContentId={playingId}
             searchRef={searchRef}
             onPlay={playChannel}
+            onToggleFavorite={toggleChannelFavorite}
             onImport={(text) => catalog.importText(text)}
             onClear={catalog.clear}
           />

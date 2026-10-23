@@ -29,6 +29,14 @@ export function StarIcon({ filled, ...props }: IconProps & { filled?: boolean })
   )
 }
 
+export function HeartIcon({ filled, ...props }: IconProps & { filled?: boolean }) {
+  return (
+    <Icon fill={filled ? 'currentColor' : 'none'} {...props}>
+      <path d="M12 20.5s-7.5-4.6-9.3-9.2C1.4 7.9 3.6 4.5 7.1 4.5c2 0 3.6 1.1 4.9 2.9 1.3-1.8 2.9-2.9 4.9-2.9 3.5 0 5.7 3.4 4.4 6.8-1.8 4.6-9.3 9.2-9.3 9.2z" />
+    </Icon>
+  )
+}
+
 export function TrashIcon(props: IconProps) {
   return (
     <Icon {...props}>

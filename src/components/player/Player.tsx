@@ -2,7 +2,8 @@ import { useEffect, useRef, useState } from 'react'
 import { useHlsPlayer } from '../../hooks/useHlsPlayer'
 import { copyText } from '../../lib/clipboard'
 import { getstreamUrl, hlsUrl, toAcestreamUri } from '../../lib/links'
-import { CloseIcon, CopyIcon, ExpandIcon, PlayIcon, RetryIcon, StarIcon } from '../icons'
+import { describeHealth, type SourceHealth } from '../../lib/sources'
+import { CloseIcon, CopyIcon, ExpandIcon, HeartIcon, PlayIcon, RetryIcon, StarIcon } from '../icons'
 import { Button, Chip, IconButton } from '../ui/Button'
 import './player.css'
 
@@ -20,6 +21,15 @@ interface Props {
   /** Fuentes alternativas del mismo canal; se muestran como selector si hay más de una. */
   sources?: PlayerSource[]
   onSelectSource?(source: PlayerSource): void
+  /** Mientras se buscan peers en las fuentes no se carga el vídeo. */
+  checking?: boolean
+  /** Estado de cada fuente (peers) por content ID, si se ha comprobado. */
+  health?: Readonly<Record<string, SourceHealth>>
+  /** Deja de comprobar y reproduce ya la fuente actual. */
+  onSkipCheck?(): void
+  /** Si se pasa, aparece el botón de favorito del canal. */
+  onToggleFavorite?(): void
+  favorite?: boolean
   /** Si se pasa, aparece el botón para guardar el stream en "Mis links". */
   onSave?(): void
   saved?: boolean
@@ -27,6 +37,8 @@ interface Props {
 }
 
 type WebkitVideo = HTMLVideoElement & { webkitEnterFullscreen?: () => void }
+
+const NO_HEALTH: Readonly<Record<string, SourceHealth>> = {}
 
 /** Segundos transcurridos desde que se monta; se reinicia con cada intento de carga. */
 function Elapsed() {
@@ -46,6 +58,11 @@ export function Player({
   contentId,
   sources = [],
   onSelectSource,
+  checking = false,
+  health = NO_HEALTH,
+  onSkipCheck,
+  onToggleFavorite,
+  favorite = false,
   onSave,
   saved = false,
   onClose,
@@ -55,7 +72,7 @@ export function Player({
   const [attempt, setAttempt] = useState(0)
   const [copied, setCopied] = useState<'vlc' | 'ace' | null>(null)
   const [manualCopy, setManualCopy] = useState<string | null>(null)
-  const { status, error } = useHlsPlayer(videoRef, hlsUrl(contentId), attempt)
+  const { status, error } = useHlsPlayer(videoRef, checking ? null : hlsUrl(contentId), attempt)
 
   useEffect(() => {
     if (!copied) return
@@ -87,6 +104,10 @@ export function Player({
 
   const streamUrl = getstreamUrl(contentId, window.location.origin)
   const showSources = sources.length > 1 && onSelectSource
+  const checked = sources.filter((source) => {
+    const state = health[source.contentId]?.state
+    return state === 'ok' || state === 'failed'
+  }).length
 
   return (
     <section className="stage" aria-label={`Reproduciendo ${title}`}>
@@ -95,11 +116,33 @@ export function Player({
           ref={videoRef}
           className="stage__video"
           // Sin controles nativos mientras hay un overlay: evita el spinner nativo detrás del nuestro.
-          controls={status !== 'loading' && status !== 'error' && status !== 'blocked'}
+          controls={status === 'playing' || status === 'paused' || status === 'buffering'}
           playsInline
           preload="auto"
           onDoubleClick={toggleFullscreen}
         />
+
+        {checking && (
+          <div className="stage__overlay" role="status">
+            <div className="spinner" aria-hidden="true" />
+            <p className="stage__overlay-title">
+              Buscando la fuente con más peers…{' '}
+              <span className="mono">
+                {checked}/{sources.length}
+              </span>
+            </p>
+            <p className="stage__overlay-hint">
+              Tarda unos segundos y evita empezar por una fuente sin peers.
+            </p>
+            {onSkipCheck && (
+              <div className="stage__overlay-actions">
+                <button type="button" className="stage__retry" onClick={onSkipCheck}>
+                  <PlayIcon /> Ver ya esta fuente
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
         {(status === 'loading' || status === 'buffering') && (
           <div className="stage__overlay stage__overlay--passive" role="status">
@@ -167,24 +210,40 @@ export function Player({
       {showSources && (
         <div className="stage__sources" role="group" aria-label="Fuentes del canal">
           <span className="stage__sources-label">Fuente</span>
-          {sources.map((source) => (
-            <Chip
-              key={source.contentId}
-              tone="data"
-              pressed={source.contentId === contentId}
-              onClick={() => onSelectSource(source)}
-              title={source.title}
-            >
-              {source.label}
-            </Chip>
-          ))}
+          {sources.map((source) => {
+            const sourceHealth = health[source.contentId]
+            const note = describeHealth(sourceHealth)
+            return (
+              <Chip
+                key={source.contentId}
+                tone="data"
+                pressed={source.contentId === contentId}
+                onClick={() => onSelectSource(source)}
+                title={source.title}
+                className={sourceHealth?.state === 'failed' ? 'chip--dim' : undefined}
+              >
+                {source.label}
+                {note && <span className="chip__note">{note}</span>}
+              </Chip>
+            )
+          })}
         </div>
       )}
 
       <div className="stage__actions">
+        {onToggleFavorite && (
+          <Button
+            variant={favorite ? 'secondary' : 'primary'}
+            icon={<HeartIcon filled={favorite} />}
+            onClick={onToggleFavorite}
+            aria-pressed={favorite}
+          >
+            {favorite ? 'En favoritos' : 'Añadir a favoritos'}
+          </Button>
+        )}
         {onSave && (
           <Button
-            variant={saved ? 'secondary' : 'primary'}
+            variant={saved || onToggleFavorite ? 'secondary' : 'primary'}
             icon={<StarIcon filled={saved} />}
             onClick={onSave}
             disabled={saved}

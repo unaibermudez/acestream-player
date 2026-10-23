@@ -2,7 +2,7 @@ import { useMemo, useRef, useState, type ChangeEvent, type RefObject } from 'rea
 import type { CatalogImportResult, CatalogSource } from '../../hooks/useCatalog'
 import { filterCategories } from '../../lib/catalog'
 import type { Channel, ChannelCategory, ChannelVariant } from '../../types/catalog'
-import { SearchIcon, UploadIcon } from '../icons'
+import { PlayIcon, SearchIcon, UploadIcon } from '../icons'
 import { Button } from '../ui/Button'
 import { ChannelShelf } from './ChannelShelf'
 import { ChannelTile } from './ChannelTile'
@@ -12,11 +12,17 @@ interface Props {
   categories: ChannelCategory[]
   /** Canales vistos recientemente, ya resueltos contra el catálogo actual. */
   recent: Channel[]
+  /** Canales favoritos, en el orden en que se marcaron. */
+  favoriteChannels: Channel[]
+  favorites: ReadonlySet<string>
+  /** Último canal visto y su fuente, para retomarlo con un clic. */
+  resume: { channel: Channel; variant: ChannelVariant } | null
   source: CatalogSource
   loaded: boolean
   activeContentId: string | null
   searchRef: RefObject<HTMLInputElement | null>
-  onPlay(channel: Channel, variant: ChannelVariant): void
+  onPlay(channel: Channel, variant: ChannelVariant, auto: boolean): void
+  onToggleFavorite(channel: Channel): void
   onImport(text: string, fileName: string): CatalogImportResult
   onClear(): void
 }
@@ -30,11 +36,15 @@ const shelfId = (index: number) => `categoria-${index + 1}`
 export function ChannelsView({
   categories,
   recent,
+  favoriteChannels,
+  favorites,
+  resume,
   source,
   loaded,
   activeContentId,
   searchRef,
   onPlay,
+  onToggleFavorite,
   onImport,
   onClear,
 }: Props) {
@@ -119,6 +129,16 @@ export function ChannelsView({
           {plural(total, 'canal', 'canales')} en{' '}
           {plural(categories.length, 'categoría', 'categorías')}
         </p>
+        {resume && !activeContentId && (
+          <Button
+            className="channels__resume"
+            icon={<PlayIcon />}
+            onClick={() => onPlay(resume.channel, resume.variant, false)}
+            title={`Volver a ${resume.channel.name} (${resume.variant.label})`}
+          >
+            {`Seguir con ${resume.channel.name}`}
+          </Button>
+        )}
       </header>
 
       <div className="channels__toolbar">
@@ -181,7 +201,9 @@ export function ChannelsView({
                 key={channel.key}
                 channel={channel}
                 activeContentId={activeContentId}
+                favorite={favorites.has(channel.key)}
                 onPlay={onPlay}
+                onToggleFavorite={onToggleFavorite}
               />
             ))}
           </ul>
@@ -196,6 +218,19 @@ export function ChannelsView({
             ))}
           </nav>
 
+          {favoriteChannels.length > 0 && (
+            <ChannelShelf
+              id="favoritos"
+              title="Favoritos"
+              note={plural(favoriteChannels.length, 'canal', 'canales')}
+              channels={favoriteChannels}
+              activeContentId={activeContentId}
+              favorites={favorites}
+              onPlay={onPlay}
+              onToggleFavorite={onToggleFavorite}
+            />
+          )}
+
           {recent.length > 0 && (
             <ChannelShelf
               id="vistos-recientemente"
@@ -203,7 +238,9 @@ export function ChannelsView({
               note={plural(recent.length, 'canal', 'canales')}
               channels={recent}
               activeContentId={activeContentId}
+              favorites={favorites}
               onPlay={onPlay}
+              onToggleFavorite={onToggleFavorite}
             />
           )}
 
@@ -215,7 +252,9 @@ export function ChannelsView({
               note={plural(category.channels.length, 'canal', 'canales')}
               channels={category.channels}
               activeContentId={activeContentId}
+              favorites={favorites}
               onPlay={onPlay}
+              onToggleFavorite={onToggleFavorite}
             />
           ))}
         </>

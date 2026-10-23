@@ -1,6 +1,6 @@
 # Plan: catálogo en el servidor y despliegue
 
-Estado: 🟡 Fase 1: en uso en local (portátil con Windows); el servidor dedicado queda aplazado
+Estado: ✅ Fase 1 cerrada en modo local (portátil con Windows). Decisión: la app se queda en local; las fases siguientes quedan aplazadas
 
 Leyenda: ✅ hecho · 🟡 en curso · ⬜ pendiente · ⏸️ aplazado · 👤 lo haces tú
 
@@ -77,3 +77,8 @@ Accesible solo por LAN o Tailscale mientras no haya autenticación.
   portátil: 59 canales cargados y motor 3.2.8 de Windows detectado a través del proxy. Los pasos del
   servidor Ubuntu quedan aplazados; la fase 2 (Tailscale) sirve igual en el portátil si se quiere
   acceso desde fuera.
+- 2026-10-23: decisión: la app se queda en local en el portátil. Se descarta el cloud (el motor
+  comparte por P2P lo que se reproduce, con riesgo de quejas y suspensión de la cuenta) y no hay
+  servidor en casa por ahora. El servidor Ubuntu y las fases 2–4 quedan aplazados; se retoman si
+  aparece un equipo para hacer de servidor. Pendiente 👤: activar el arranque de Docker Desktop con
+  Windows.

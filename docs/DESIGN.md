@@ -37,15 +37,15 @@ texto y 1.1 en titulares serif.
 │                                                                  │
 │  ┌───────────────────── vídeo 16:9 ──────────────────────┐       │  ← solo al reproducir
 │  └────────────────────────────────────────────────────────┘      │
-│  M+ LaLiga 2  (Fraunces grande)          [1080p **][720p *]       │
+│  Canal Uno 2  (Fraunces grande)          [1080p **][720p *]       │
 │  [Guardar] [Copiar URL VLC] [acestream://] [Pantalla completa]    │
 │                                                                  │
-│  ( Buscar canales… )   La Liga · Dazn · Deportes …  (saltos)      │
+│  ( Buscar canales… )   Deportes · Cine · Series …   (saltos)      │
 │  ─────────────────────────────────────────────────────────────── │
 │  Vistos recientemente                                   3        │
 │  [▣][▣][▣] →                                                      │
 │  ─────────────────────────────────────────────────────────────── │
-│  LA LIGA                                          6 canales ‹ ›  │
+│  DEPORTES                                         6 canales ‹ ›  │
 │  [▣][▣][▣][▣][▣][▣] →                                             │
 ```
 

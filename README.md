@@ -192,6 +192,9 @@ carga justo después de encender, espera medio minuto y recarga, o haz doble cli
 
 Probado en local; los pasos son para un Ubuntu Server x86-64 (22.04 o posterior).
 
+Si partes de un ordenador sin sistema, la guía [Servidor casero con Ubuntu](docs/SERVIDOR-UBUNTU.md)
+explica desde cero la instalación de Ubuntu, la red, Docker, la app y el acceso con Tailscale.
+
 **1. Docker y Compose**
 
 ```bash

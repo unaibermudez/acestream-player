@@ -2,7 +2,7 @@
 
 Guía paso a paso para convertir un ordenador viejo en el servidor de Acestream Player. Al terminar,
 el ordenador queda encendido en un rincón, sin pantalla ni teclado. Desde cualquier móvil, tablet u
-ordenador de casa abres `http://tele.local:8080` y ves tus canales.
+ordenador de casa abres `http://xeon-server.local:8080` y ves tus canales.
 
 Tiempo aproximado: una hora, la mayor parte esperando a que se instalen cosas.
 
@@ -129,7 +129,7 @@ para marcar casillas y `Enter` para aceptar.
 
 10. **Perfil:**
     - _Your name:_ tu nombre.
-    - _Your server's name:_ **`tele`** (o el que quieras; esta guía usa `tele`).
+    - _Your server's name:_ **`xeon-server`** (o el que quieras; esta guía usa `xeon-server`).
     - _Pick a username:_ por ejemplo **`unai`**. Corto, en minúsculas, sin espacios.
     - _Contraseña:_ una que recuerdes. Se pide cada vez que uses `sudo`.
 11. **Ubuntu Pro:** _Skip for now_.
@@ -142,7 +142,7 @@ para marcar casillas y `Enter` para aceptar.
 
 ## 6. Primer arranque y conexión por SSH
 
-Tras reiniciar, aparecen mensajes y al final `tele login:`. Ya está instalado.
+Tras reiniciar, aparecen mensajes y al final `xeon-server login:`. Ya está instalado.
 
 Desde aquí manejarás el servidor **desde tu PC**. Abre una terminal en Windows (PowerShell o Terminal)
 y conéctate con tu usuario y la IP que apuntaste:
@@ -153,7 +153,7 @@ ssh unai@192.168.1.50
 
 - La primera vez pregunta si confías en el equipo: escribe `yes`.
 - Luego pide la contraseña del servidor. Al escribirla no se ve nada; es normal.
-- Verás algo como `unai@tele:~$`. Todo lo que escribas ahora se ejecuta en el servidor.
+- Verás algo como `unai@xeon-server:~$`. Todo lo que escribas ahora se ejecuta en el servidor.
 - Para salir: `exit`.
 
 Si no apuntaste la IP: en el propio servidor, entra con tu usuario y contraseña y escribe
@@ -194,21 +194,21 @@ funcionar el acceso desde el móvil. La forma más sencilla de evitarlo es una *
 router:
 
 1. Entra en la web del router (normalmente <http://192.168.1.1>; usuario y contraseña en la pegatina).
-2. Busca _DHCP_, _LAN_ o _Dispositivos conectados_. Verás `tele` en la lista.
-3. Usa la opción _Reservar IP_, _IP estática_ o _Asignación fija_ para `tele` con su IP actual.
+2. Busca _DHCP_, _LAN_ o _Dispositivos conectados_. Verás `xeon-server` en la lista.
+3. Usa la opción _Reservar IP_, _IP estática_ o _Asignación fija_ para `xeon-server` con su IP actual.
 
 Cada router lo llama de una forma; si no encuentras la opción, busca en Internet «reserva DHCP» y el
 modelo del router (Movistar, Digi, O2, Vodafone, etc.).
 
-### Llamarlo por su nombre: `tele.local`
+### Llamarlo por su nombre: `xeon-server.local`
 
-Para escribir `tele.local` en lugar de la IP:
+Para escribir `xeon-server.local` en lugar de la IP:
 
 ```bash
 sudo apt install -y avahi-daemon
 ```
 
-Desde ese momento funcionan `ssh unai@tele.local` y `http://tele.local:8080` desde Windows, macOS, iPhone
+Desde ese momento funcionan `ssh unai@xeon-server.local` y `http://xeon-server.local:8080` desde Windows, macOS, iPhone
 y la mayoría de móviles Android recientes. Si en algún dispositivo no funciona, usa la IP.
 
 ### Portátil: que siga funcionando con la tapa cerrada
@@ -299,7 +299,7 @@ Tu catálogo (`hashes.json`) está en tu PC y no se sube nunca al repositorio. C
 **desde PowerShell en tu PC** (no desde la sesión SSH):
 
 ```powershell
-scp C:\ruta\a\hashes.json unai@tele.local:~/acestream-player/data/catalog.json
+scp C:\ruta\a\hashes.json unai@xeon-server.local:~/acestream-player/data/catalog.json
 ```
 
 No hace falta reiniciar nada: recarga la página y aparecen los canales. Para actualizar el catálogo,
@@ -319,7 +319,7 @@ docker compose up -d
 
 Desde cualquier dispositivo conectado al Wi-Fi de casa, abre:
 
-- `http://tele.local:8080`, o
+- `http://xeon-server.local:8080`, o
 - `http://192.168.1.50:8080` (con la IP de tu servidor).
 
 Para tenerla como una app en el móvil:
@@ -350,7 +350,7 @@ si estuvieras en casa, sin abrir nada en el router. Es gratis para uso personal.
 
 3. Instala la app **Tailscale** en el móvil (y en el portátil, si quieres) e inicia sesión con la misma
    cuenta.
-4. Con Tailscale activado en el móvil, abre `http://tele:8080` desde cualquier sitio.
+4. Con Tailscale activado en el móvil, abre `http://xeon-server:8080` desde cualquier sitio.
 
 **HTTPS y PWA completa (opcional).** Tailscale puede servir la app con un certificado válido, lo que
 permite instalarla como PWA de verdad:
@@ -363,7 +363,7 @@ permite instalarla como PWA de verdad:
    sudo tailscale serve --bg 8080
    ```
 
-3. La app queda en `https://tele.<tu-red>.ts.net`; el comando anterior muestra la dirección exacta.
+3. La app queda en `https://xeon-server.<tu-red>.ts.net`; el comando anterior muestra la dirección exacta.
    Solo es accesible para tus dispositivos de Tailscale.
 
 ## 12. Mantenimiento
@@ -398,10 +398,10 @@ no marcaste _Install OpenSSH server_ al instalar, conecta pantalla y teclado y e
 `sudo apt install openssh-server`.
 
 **`ssh` dice _REMOTE HOST IDENTIFICATION HAS CHANGED_.**
-Pasa si reinstalas Ubuntu en el mismo equipo. En tu PC: `ssh-keygen -R 192.168.1.50` (o `tele.local`)
+Pasa si reinstalas Ubuntu en el mismo equipo. En tu PC: `ssh-keygen -R 192.168.1.50` (o `xeon-server.local`)
 y vuelve a conectar.
 
-**`tele.local` no funciona, pero la IP sí.**
+**`xeon-server.local` no funciona, pero la IP sí.**
 Comprueba que instalaste `avahi-daemon`. Algunos Android y algunas redes de invitados no resuelven
 nombres `.local`; usa la IP.
 
